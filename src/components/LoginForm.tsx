@@ -7,7 +7,7 @@ export default function LoginForm() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Backend'e gönderilecek (sonra yazacağız)
+   
     console.log("Login:", { email, password });
   };
 

@@ -1,10 +1,10 @@
 "use client";
-/* eslint-disable react/no-unescaped-entities */
+
 
 export default function AboutPage() {
   return (
     <section className="relative bg-gray-50 py-20 px-4 md:px-10 overflow-hidden">
-      {/* Background Blur Decorations */}
+     
       <div className="absolute -top-10 -left-10 w-72 h-72 bg-green-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
       <div className="absolute bottom-0 right-0 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-2xl opacity-20 animate-pulse" />
 
@@ -15,7 +15,7 @@ export default function AboutPage() {
         </p>
       </div>
 
-      {/* Accordion Section */}
+      
       <div className="max-w-4xl mx-auto space-y-6 relative z-10">
         {accordionData.map((item, index) => (
           <details
