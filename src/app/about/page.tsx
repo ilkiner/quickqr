@@ -33,14 +33,13 @@ export default function AboutPage() {
         ))}
       </div>
 
-      {/* Optional: Team / Join Us Section */}
    <div className="mt-20 flex justify-center items-center">
   <div className="bg-green-400 bg-opacity-95 text-white rounded-2xl p-10 shadow-[0_10px_40px_rgba(34,197,94,0.4)] w-full max-w-2xl text-center">
     <h3 className="text-2xl md:text-3xl font-bold text-white mb-3">
       Want to work with us?
     </h3>
     <p className="text-white/90 text-md md:text-lg mb-6">
-      We're always looking for collaborators and talents who love clean code and clever design.
+      We&apos;re always looking for collaborators and talents who love clean code and clever design.
     </p>
     <a
       href="/contact"
