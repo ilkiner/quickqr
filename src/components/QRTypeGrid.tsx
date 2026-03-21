@@ -3,12 +3,12 @@
 import Link from "next/link";
 
 const qrTypes = [
-  { title: "Restaurant Menu QR", desc: "Link a digital menu", icon: "🍽️" },
-  { title: "vCard / Contact QR", desc: "Share contact details", icon: "👤" },
-  { title: "Social Media QR", desc: "Link social profiles", icon: "📱" },
-  { title: "Google Maps QR", desc: "Share location", icon: "📍" },
-  { title: "Email QR", desc: "Quick email compose", icon: "✉️" },
-  { title: "Wi-Fi QR", desc: "Instant Wi-Fi login", icon: "📶" },
+  { title: "Restaurant Menu QR", desc: "Link a digital menu", icon: "🍽️", param: "restaurant-menu" },
+  { title: "vCard / Contact QR", desc: "Share contact details", icon: "👤", param: "vcard" },
+  { title: "Social Media QR", desc: "Link social profiles", icon: "📱", param: "social-media" },
+  { title: "Google Maps QR", desc: "Share location", icon: "📍", param: "google-maps" },
+  { title: "Email QR", desc: "Quick email compose", icon: "✉️", param: "email" },
+  { title: "Wi-Fi QR", desc: "Instant Wi-Fi login", icon: "📶", param: "wifi" },
 ];
 
 export default function QRTypeGrid() {
@@ -33,12 +33,7 @@ export default function QRTypeGrid() {
 
              
               <Link
-                href={`/generate?type=${type.title
-                  .toLowerCase()
-                  .replace(/\s+/g, "-")
-                  .replace("/", "")
-                  .replace("qr", "")
-                  .trim()}`}
+                href={`/generate?type=${type.param}`}
                 className="mt-auto block bg-black hover:bg-green-600 text-white text-center py-2 px-6 rounded-2xl text-sm transition"
               >
                 Generate Now

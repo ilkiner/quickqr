@@ -1,133 +1,373 @@
 "use client";
 
-import { Dialog } from "@headlessui/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+type Tab = "login" | "register";
+
+function getPasswordStrength(password: string): "weak" | "medium" | "strong" {
+  if (!password) return "weak";
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (password.length >= 12) score++;
+  if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  if (score <= 2) return "weak";
+  if (score <= 4) return "medium";
+  return "strong";
+}
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function AuthModal({
   isOpen,
   onClose,
-  isLogin,       
-  setIsLogin,    
+  defaultTab,
 }: {
   isOpen: boolean;
   onClose: () => void;
-  isLogin: boolean;
-  setIsLogin: (value: boolean) => void;
+  defaultTab: Tab;
 }) {
-  
-  const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
+  const [tab, setTab] = useState<Tab>(defaultTab);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [rateLimitedUntil, setRateLimitedUntil] = useState(0);
 
-  const validatePassword = (password: string) => {
-    const errors = [];
-    if (password.length < 8) errors.push("At least 8 characters");
-    if (!/[A-Z]/.test(password)) errors.push("At least one uppercase letter");
-    if (!/[a-z]/.test(password)) errors.push("At least one lowercase letter");
-    if (!/[0-9]/.test(password)) errors.push("At least one number");
-    return errors;
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+
+  const [regName, setRegName] = useState("");
+  const [regEmail, setRegEmail] = useState("");
+  const [regPassword, setRegPassword] = useState("");
+  const [regConfirm, setRegConfirm] = useState("");
+  const [terms, setTerms] = useState(false);
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (isOpen) {
+      setTab(defaultTab);
+      setSuccess(false);
+      setErrors({});
+      setLoading(false);
+    }
+  }, [isOpen, defaultTab]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, onClose]);
+
+  const nowLimited = Date.now() < rateLimitedUntil;
+  const waitSec = Math.ceil((rateLimitedUntil - Date.now()) / 1000);
+
+  const runSubmitSuccess = () => {
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setSuccess(true);
+      setFailedAttempts(0);
+      setTimeout(() => {
+        setSuccess(false);
+        onClose();
+      }, 1500);
+    }, 500);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const errors = validatePassword(password);
-    setPasswordErrors(errors);
-    if (errors.length > 0) return;
-    console.log(isLogin ? "Login attempt" : "Register attempt", { email, password });
+    if (nowLimited) return;
+    const next: Record<string, string> = {};
+    if (!loginEmail.trim()) next.loginEmail = "Email is required";
+    else if (!emailRegex.test(loginEmail.trim())) next.loginEmail = "Enter a valid email";
+    if (!loginPassword) next.loginPassword = "Password is required";
+    else if (loginPassword.length < 8) next.loginPassword = "Password must be at least 8 characters";
+    setErrors(next);
+    if (Object.keys(next).length > 0) {
+      setFailedAttempts((f) => {
+        const n = f + 1;
+        if (n >= 3) {
+          setRateLimitedUntil(Date.now() + 30000);
+          return 0;
+        }
+        return n;
+      });
+      return;
+    }
+    runSubmitSuccess();
   };
+
+  const handleRegisterSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (nowLimited) return;
+    const next: Record<string, string> = {};
+    if (!regName.trim() || regName.trim().length < 2) next.regName = "Enter your full name (min 2 characters)";
+    if (!regEmail.trim()) next.regEmail = "Email is required";
+    else if (!emailRegex.test(regEmail.trim())) next.regEmail = "Enter a valid email";
+    if (!regPassword) next.regPassword = "Password is required";
+    else if (regPassword.length < 8) next.regPassword = "Password must be at least 8 characters";
+    if (regPassword !== regConfirm) next.regConfirm = "Passwords do not match";
+    if (!terms) next.terms = "You must agree to the Terms & Privacy Policy";
+    setErrors(next);
+    if (Object.keys(next).length > 0) {
+      setFailedAttempts((f) => {
+        const n = f + 1;
+        if (n >= 3) {
+          setRateLimitedUntil(Date.now() + 30000);
+          return 0;
+        }
+        return n;
+      });
+      return;
+    }
+    runSubmitSuccess();
+  };
+
+  const strength = getPasswordStrength(regPassword);
+  const strengthColor =
+    strength === "weak" ? "bg-red-500" : strength === "medium" ? "bg-yellow-500" : "bg-green-600";
+  const strengthWidth =
+    strength === "weak" ? "w-1/3" : strength === "medium" ? "w-2/3" : "w-full";
+
+  if (!isOpen) return null;
 
   return (
-    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
-      <div className="fixed inset-0 bg-black/40" aria-hidden="true" />
-      <div className="fixed inset-0 flex items-center justify-center p-4">
-        <Dialog.Panel className=" relative w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-          <Dialog.Title className="text-center text-xl font-bold mb-4">
-            Welcome to QuickQR
-          </Dialog.Title>
-
-          
-          <div className="flex justify-center mb-6">
-            <button
-              className={`px-4 py-2 rounded-l-md w-1/2 transition ${
-                isLogin ? "bg-gray-200 font-semibold" : "bg-gray-100 text-gray-500"
-              }`}
-              onClick={() => setIsLogin(true)}
-            >
-              Login
-            </button>
-            <button
-              className={`px-4 py-2 rounded-r-md w-1/2 transition ${
-                !isLogin ? "bg-gray-200 font-semibold" : "bg-gray-100 text-gray-500"
-              }`}
-              onClick={() => setIsLogin(false)}
-            >
-              Register
-            </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <button
+        type="button"
+        className="fixed inset-0 bg-black/50 cursor-default"
+        aria-label="Close modal"
+        onClick={onClose}
+      />
+      <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 p-8 z-10">
+        {success ? (
+          <div className="text-center py-6">
+            <div className="flex justify-center mb-4">
+              <i className="ri-checkbox-circle-fill text-5xl text-green-600" aria-hidden />
+            </div>
+            <p className="text-lg font-semibold text-gray-900">Welcome to QuickQR!</p>
           </div>
-
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="mt-1 w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-                required
-              />
+        ) : (
+          <>
+            <div className="flex rounded-lg overflow-hidden border border-gray-200 mb-6">
+              <button
+                type="button"
+                onClick={() => {
+                  setTab("login");
+                  setErrors({});
+                }}
+                className={`flex-1 py-2 text-sm font-medium transition ${
+                  tab === "login" ? "bg-green-600 text-white" : "bg-gray-50 text-gray-600"
+                }`}
+              >
+                Login
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTab("register");
+                  setErrors({});
+                }}
+                className={`flex-1 py-2 text-sm font-medium transition ${
+                  tab === "register" ? "bg-green-600 text-white" : "bg-gray-50 text-gray-600"
+                }`}
+              >
+                Register
+              </button>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setPasswordErrors(validatePassword(e.target.value));
-                  }}
-                  placeholder="••••••••"
-                  className="w-full border rounded-md px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                  required
-                />
+            {nowLimited && (
+              <p className="text-red-500 text-sm mb-4" role="alert">
+                Too many attempts, wait {waitSec}s
+              </p>
+            )}
+
+            {tab === "login" ? (
+              <form noValidate onSubmit={handleLoginSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="auth-login-email" className="block text-sm font-medium text-gray-700">
+                    Email
+                  </label>
+                  <input
+                    id="auth-login-email"
+                    type="email"
+                    autoComplete="email"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    className={`mt-1 w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                      errors.loginEmail ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {errors.loginEmail && (
+                    <p className="text-red-500 text-sm mt-1">{errors.loginEmail}</p>
+                  )}
+                </div>
+                <div>
+                  <label htmlFor="auth-login-password" className="block text-sm font-medium text-gray-700">
+                    Password
+                  </label>
+                  <input
+                    id="auth-login-password"
+                    type="password"
+                    autoComplete="current-password"
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    className={`mt-1 w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                      errors.loginPassword ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {errors.loginPassword && (
+                    <p className="text-red-500 text-sm mt-1">{errors.loginPassword}</p>
+                  )}
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="rounded border-gray-300 text-green-600 focus:ring-green-500"
+                    />
+                    Remember me
+                  </label>
+                  <span className="text-sm text-gray-400 cursor-not-allowed" aria-disabled>
+                    Forgot password?
+                  </span>
+                </div>
                 <button
-                  type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  type="submit"
+                  disabled={loading || nowLimited}
+                  className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white w-full py-3 rounded-lg font-semibold"
                 >
-                  <i className={showPassword ? "ri-eye-off-line" : "ri-eye-line"} />
+                  {loading ? (
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <i className="ri-loader-4-line animate-spin" aria-hidden />
+                      Please wait
+                    </span>
+                  ) : (
+                    "Sign in"
+                  )}
                 </button>
-              </div>
+              </form>
+            ) : (
+              <form noValidate onSubmit={handleRegisterSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="auth-reg-name" className="block text-sm font-medium text-gray-700">
+                    Full Name
+                  </label>
+                  <input
+                    id="auth-reg-name"
+                    type="text"
+                    autoComplete="name"
+                    minLength={2}
+                    value={regName}
+                    onChange={(e) => setRegName(e.target.value)}
+                    className={`mt-1 w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                      errors.regName ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {errors.regName && <p className="text-red-500 text-sm mt-1">{errors.regName}</p>}
+                </div>
+                <div>
+                  <label htmlFor="auth-reg-email" className="block text-sm font-medium text-gray-700">
+                    Email
+                  </label>
+                  <input
+                    id="auth-reg-email"
+                    type="email"
+                    autoComplete="email"
+                    value={regEmail}
+                    onChange={(e) => setRegEmail(e.target.value)}
+                    className={`mt-1 w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                      errors.regEmail ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {errors.regEmail && <p className="text-red-500 text-sm mt-1">{errors.regEmail}</p>}
+                </div>
+                <div>
+                  <label htmlFor="auth-reg-password" className="block text-sm font-medium text-gray-700">
+                    Password
+                  </label>
+                  <input
+                    id="auth-reg-password"
+                    type="password"
+                    autoComplete="new-password"
+                    value={regPassword}
+                    onChange={(e) => setRegPassword(e.target.value)}
+                    className={`mt-1 w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                      errors.regPassword ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {errors.regPassword && (
+                    <p className="text-red-500 text-sm mt-1">{errors.regPassword}</p>
+                  )}
+                  <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div className={`h-full transition-all ${strengthColor} ${strengthWidth}`} />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1 capitalize">Strength: {strength}</p>
+                </div>
+                <div>
+                  <label htmlFor="auth-reg-confirm" className="block text-sm font-medium text-gray-700">
+                    Confirm Password
+                  </label>
+                  <input
+                    id="auth-reg-confirm"
+                    type="password"
+                    autoComplete="new-password"
+                    value={regConfirm}
+                    onChange={(e) => setRegConfirm(e.target.value)}
+                    className={`mt-1 w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 ${
+                      errors.regConfirm ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {errors.regConfirm && (
+                    <p className="text-red-500 text-sm mt-1">{errors.regConfirm}</p>
+                  )}
+                </div>
+                <label className="flex items-start gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={terms}
+                    onChange={(e) => setTerms(e.target.checked)}
+                    className="mt-1 rounded border-gray-300 text-green-600 focus:ring-green-500"
+                  />
+                  <span>I agree to Terms &amp; Privacy Policy</span>
+                </label>
+                {errors.terms && <p className="text-red-500 text-sm">{errors.terms}</p>}
+                <button
+                  type="submit"
+                  disabled={loading || nowLimited}
+                  className="bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white w-full py-3 rounded-lg font-semibold"
+                >
+                  {loading ? (
+                    <span className="inline-flex items-center justify-center gap-2">
+                      <i className="ri-loader-4-line animate-spin" aria-hidden />
+                      Please wait
+                    </span>
+                  ) : (
+                    "Create account"
+                  )}
+                </button>
+              </form>
+            )}
+          </>
+        )}
 
-              {passwordErrors.length > 0 && (
-                <ul className="text-sm text-red-500 mt-2 space-y-1">
-                  {passwordErrors.map((err, i) => (
-                    <li key={i}>• {err}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            <button
-              type="submit"
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition"
-            >
-              {isLogin ? "Login" : "Register"}
-            </button>
-          </form>
-
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-700"
-          >
-            ✕
-          </button>
-        </Dialog.Panel>
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-xl leading-none"
+          aria-label="Close"
+        >
+          ×
+        </button>
       </div>
-    </Dialog>
+    </div>
   );
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 export default function Footer() {
   return (
     <footer className="bg-gray-900 text-gray-300 mt-12">
@@ -16,9 +18,21 @@ export default function Footer() {
         <div>
           <h4 className="text-md font-semibold mb-3">Links</h4>
           <ul className="space-y-2 text-sm">
-            <li><a href="/generate" className="hover:text-white transition">Generate QR</a></li>
-            <li><a href="/about" className="hover:text-white transition">About</a></li>
-            <li><a href="/contact" className="hover:text-white transition">Contact</a></li>
+            <li>
+              <Link href="/generate" className="hover:text-white transition">
+                Generate QR
+              </Link>
+            </li>
+            <li>
+              <Link href="/about" className="hover:text-white transition">
+                About
+              </Link>
+            </li>
+            <li>
+              <Link href="/contact" className="hover:text-white transition">
+                Contact
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -26,9 +40,36 @@ export default function Footer() {
         <div>
           <h4 className="text-md font-semibold mb-3">Follow Us</h4>
           <ul className="space-y-2 text-sm">
-            <li><a href="#" className="hover:text-white transition">Instagram</a></li>
-            <li><a href="#" className="hover:text-white transition">Facebook</a></li>
-            <li><a href="#" className="hover:text-white transition">LinkedIn</a></li>
+            <li>
+              <a
+                href="https://www.instagram.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white transition"
+              >
+                Instagram
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://www.facebook.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white transition"
+              >
+                Facebook
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://www.linkedin.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-white transition"
+              >
+                LinkedIn
+              </a>
+            </li>
           </ul>
         </div>
 
