@@ -9,7 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@headlessui/react": "^2.2.9",
     "next": "^16.2.1",
     "react": "19.1.0",
     "react-dom": "19.1.0",
@@ -23,7 +22,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "15.5.4",
+    "eslint-config-next": "16.2.1",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
