@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 const qrTypes = [
@@ -179,13 +180,24 @@ export default function GeneratePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b px-6 py-4 flex justify-between items-center sticky top-0 z-10">
-        <div className="flex items-center gap-2 text-xl font-bold text-green-600">
-          <i className="ri-qr-code-line text-2xl" />
+      <nav className="bg-white border-b px-6 py-4 flex flex-wrap justify-between items-center gap-3 sticky top-0 z-10">
+        <Link
+          href="/"
+          className="flex items-center gap-2 text-xl font-bold text-green-600 hover:text-green-700 transition"
+          title="Back to home"
+        >
+          <i className="ri-qr-code-line text-2xl" aria-hidden />
           QuickQR
-        </div>
+        </Link>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4 flex-wrap justify-end">
+          <Link
+            href="/"
+            className="text-gray-600 hover:text-green-600 flex items-center gap-1 text-sm font-medium"
+          >
+            <i className="ri-home-line text-lg" aria-hidden />
+            Home
+          </Link>
           <button
             type="button"
             onClick={() => setShowHistory(!showHistory)}
