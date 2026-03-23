@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createClient } from "src/lib/supabase/client";
 
 type Tab = "login" | "register";
 
@@ -30,7 +31,7 @@ export default function AuthModal({
 }) {
   const [tab, setTab] = useState<Tab>(defaultTab);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
   const [rateLimitedUntil, setRateLimitedUntil] = useState(0);
 
@@ -49,7 +50,7 @@ export default function AuthModal({
   useEffect(() => {
     if (isOpen) {
       setTab(defaultTab);
-      setSuccess(false);
+      setSubmitted(false);
       setErrors({});
       setLoading(false);
     }
@@ -67,20 +68,7 @@ export default function AuthModal({
   const nowLimited = Date.now() < rateLimitedUntil;
   const waitSec = Math.ceil((rateLimitedUntil - Date.now()) / 1000);
 
-  const runSubmitSuccess = () => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      setSuccess(true);
-      setFailedAttempts(0);
-      setTimeout(() => {
-        setSuccess(false);
-        onClose();
-      }, 1500);
-    }, 500);
-  };
-
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (nowLimited) return;
     const next: Record<string, string> = {};
@@ -100,10 +88,28 @@ export default function AuthModal({
       });
       return;
     }
-    runSubmitSuccess();
+    try {
+      setLoading(true);
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithPassword({
+        email: loginEmail.trim(),
+        password: loginPassword,
+      });
+      if (error) {
+        setErrors({ _form: error.message });
+        return;
+      }
+      setFailedAttempts(0);
+      onClose();
+      window.location.reload();
+    } catch {
+      setErrors({ _form: "Something went wrong. Please try again." });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (nowLimited) return;
     const next: Record<string, string> = {};
@@ -126,7 +132,25 @@ export default function AuthModal({
       });
       return;
     }
-    runSubmitSuccess();
+    try {
+      setLoading(true);
+      const supabase = createClient();
+      const { error } = await supabase.auth.signUp({
+        email: regEmail.trim(),
+        password: regPassword,
+        options: { data: { full_name: regName.trim() } },
+      });
+      if (error) {
+        setErrors({ _form: error.message });
+        return;
+      }
+      setFailedAttempts(0);
+      setSubmitted(true);
+    } catch {
+      setErrors({ _form: "Something went wrong. Please try again." });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const strength = getPasswordStrength(regPassword);
@@ -146,12 +170,12 @@ export default function AuthModal({
         onClick={onClose}
       />
       <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 p-8 z-10">
-        {success ? (
+        {submitted ? (
           <div className="text-center py-6">
             <div className="flex justify-center mb-4">
               <i className="ri-checkbox-circle-fill text-5xl text-green-600" aria-hidden />
             </div>
-            <p className="text-lg font-semibold text-gray-900">Welcome to QuickQR!</p>
+            <p className="text-lg font-semibold text-gray-900">Check your email to confirm your account.</p>
           </div>
         ) : (
           <>
@@ -185,6 +209,11 @@ export default function AuthModal({
             {nowLimited && (
               <p className="text-red-500 text-sm mb-4" role="alert">
                 Too many attempts, wait {waitSec}s
+              </p>
+            )}
+            {errors._form && (
+              <p className="text-red-500 text-sm mb-4" role="alert">
+                {errors._form}
               </p>
             )}
 

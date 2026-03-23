@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import AuthModal from "src/components/AuthModal";
+import type { User } from "@supabase/supabase-js";
+import { createClient } from "src/lib/supabase/client";
 
 const qrTypes = [
   { id: "restaurant", label: "Restaurant Menu" },
@@ -48,7 +51,7 @@ function isValidHttpUrl(value: string): boolean {
   }
 }
 
-function buildPayload(
+function buildQrData(
   activeType: string,
   values: Record<string, string>
 ): { data: string; error?: string } {
@@ -112,6 +115,34 @@ export default function GeneratePage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [qrUrl, setQrUrl] = useState("");
   const [showHistory, setShowHistory] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [savePromptVisible, setSavePromptVisible] = useState(false);
+  const [authModal, setAuthModal] = useState<{
+    open: boolean;
+    tab: "login" | "register";
+  }>({ open: false, tab: "register" });
+
+  useEffect(() => {
+    const supabase = createClient();
+    let mounted = true;
+    const loadUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (mounted) setCurrentUser(user ?? null);
+    };
+    void loadUser();
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setCurrentUser(session?.user ?? null);
+    });
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const syncQueryFromType = useCallback(
     (id: string) => {
@@ -144,19 +175,77 @@ export default function GeneratePage() {
     setFormValues((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const { data, error } = buildPayload(activeType, formValues);
+    const { data, error } = buildQrData(activeType, formValues);
     if (error) {
       setErrors({ _form: error });
       return;
     }
     setErrors({});
+    setSubmitting(true);
     const encoded = encodeURIComponent(data);
-    setQrUrl(
-      `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encoded}`
-    );
+    const generatedUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encoded}`;
+    setQrUrl(generatedUrl);
+
+    try {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setCurrentUser(user ?? null);
+
+      if (user) {
+        const { count, error: countError } = await supabase
+          .from("qr_codes")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id);
+
+        if (countError) {
+          setErrors({ _form: countError.message });
+          return;
+        }
+
+        if ((count ?? 0) >= 5) {
+          setErrors({ _form: "Free plan limit reached. Upgrade to create more QR codes." });
+          return;
+        }
+
+        const title =
+          formValues.name?.trim() ||
+          formValues.ssid?.trim() ||
+          qrTypes.find((item) => item.id === activeType)?.label ||
+          "QR Code";
+
+        const { error: insertError } = await supabase.from("qr_codes").insert({
+          user_id: user.id,
+          type: activeType,
+          title,
+          data,
+          qr_url: generatedUrl,
+        });
+        if (insertError) {
+          setErrors({ _form: insertError.message });
+        } else {
+          setSavePromptVisible(false);
+        }
+      } else {
+        setSavePromptVisible(true);
+      }
+    } catch {
+      setErrors({ _form: "QR created, but saving failed. Please try again." });
+    } finally {
+      setSubmitting(false);
+    }
   };
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setCurrentUser(null);
+    setSavePromptVisible(false);
+    window.location.reload();
+  };
+
 
   const downloadPng = async () => {
     if (!qrUrl) return;
@@ -207,10 +296,25 @@ export default function GeneratePage() {
             View History
           </button>
 
-          <button type="button" className="text-gray-600 hover:text-red-600 flex items-center gap-1">
-            <i className="ri-logout-box-r-line text-lg" />
-            Logout
-          </button>
+          {currentUser ? (
+            <button
+              type="button"
+              onClick={() => void handleLogout()}
+              className="text-gray-600 hover:text-red-600 flex items-center gap-1"
+            >
+              <i className="ri-logout-box-r-line text-lg" />
+              Logout
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAuthModal({ open: true, tab: "register" })}
+              className="text-gray-600 hover:text-green-600 flex items-center gap-1"
+            >
+              <i className="ri-user-add-line text-lg" />
+              Register
+            </button>
+          )}
         </div>
       </nav>
 
@@ -258,9 +362,10 @@ export default function GeneratePage() {
                 </div>
                 <button
                   type="submit"
+                  disabled={submitting}
                   className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-semibold"
                 >
-                  Generate QR Code
+                  {submitting ? "Generating..." : "Generate QR Code"}
                 </button>
               </form>
             )}
@@ -281,9 +386,10 @@ export default function GeneratePage() {
                 </div>
                 <button
                   type="submit"
+                  disabled={submitting}
                   className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-semibold"
                 >
-                  Generate QR Code
+                  {submitting ? "Generating..." : "Generate QR Code"}
                 </button>
               </form>
             )}
@@ -304,9 +410,10 @@ export default function GeneratePage() {
                 </div>
                 <button
                   type="submit"
+                  disabled={submitting}
                   className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-semibold"
                 >
-                  Generate QR Code
+                  {submitting ? "Generating..." : "Generate QR Code"}
                 </button>
               </form>
             )}
@@ -359,9 +466,10 @@ export default function GeneratePage() {
                 </div>
                 <button
                   type="submit"
+                  disabled={submitting}
                   className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-semibold"
                 >
-                  Generate QR Code
+                  {submitting ? "Generating..." : "Generate QR Code"}
                 </button>
               </form>
             )}
@@ -399,9 +507,10 @@ export default function GeneratePage() {
                 </div>
                 <button
                   type="submit"
+                  disabled={submitting}
                   className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-semibold"
                 >
-                  Generate QR Code
+                  {submitting ? "Generating..." : "Generate QR Code"}
                 </button>
               </form>
             )}
@@ -443,16 +552,17 @@ export default function GeneratePage() {
                 </div>
                 <button
                   type="submit"
+                  disabled={submitting}
                   className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-semibold"
                 >
-                  Generate QR Code
+                  {submitting ? "Generating..." : "Generate QR Code"}
                 </button>
               </form>
             )}
           </div>
 
           {qrUrl && (
-            <div className="bg-white shadow rounded-lg p-6 text-center">
+            <div className="bg-white shadow rounded-lg p-6 text-center space-y-4">
               <h2 className="text-lg font-bold mb-4">Your QR Code</h2>
               <div className="inline-block border-2 border-green-500 rounded-2xl p-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -477,6 +587,18 @@ export default function GeneratePage() {
                   Create Another
                 </button>
               </div>
+              {!currentUser && savePromptVisible && (
+                <div className="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg p-3 flex flex-wrap items-center justify-center gap-3">
+                  <span>Sign up to save your QR codes and view scan analytics</span>
+                  <button
+                    type="button"
+                    onClick={() => setAuthModal({ open: true, tab: "register" })}
+                    className="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-md text-sm"
+                  >
+                    Create Free Account
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -488,6 +610,11 @@ export default function GeneratePage() {
           )}
         </div>
       </div>
+      <AuthModal
+        isOpen={authModal.open}
+        onClose={() => setAuthModal((prev) => ({ ...prev, open: false }))}
+        defaultTab={authModal.tab}
+      />
     </div>
   );
 }
