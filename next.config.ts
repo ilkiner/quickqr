@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const csp =
-  "default-src 'self'; img-src 'self' https://api.qrserver.com data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; connect-src 'self' https://api.qrserver.com";
+  "default-src 'self'; img-src 'self' https://api.qrserver.com data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; connect-src 'self' https://api.qrserver.com https://zekvyrnszhyfwuatmevt.supabase.co";
 
 const nextConfig: NextConfig = {
   async headers() {
