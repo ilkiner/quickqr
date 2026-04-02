@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import AuthModal from "src/components/AuthModal";
@@ -107,6 +107,53 @@ function buildQrData(
   }
 }
 
+const QR_PX = 300;
+const WATERMARK_H = 28;
+
+async function renderQrOnCanvas(
+  canvas: HTMLCanvasElement,
+  qrApiUrl: string,
+  withWatermark: boolean
+): Promise<void> {
+  const proxyUrl = `/api/qr-image?url=${encodeURIComponent(qrApiUrl)}`;
+  const res = await fetch(proxyUrl);
+  if (!res.ok) throw new Error("QR proxy failed");
+  const blob = await res.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          reject(new Error("No canvas context"));
+          return;
+        }
+        const w = QR_PX;
+        const h = withWatermark ? QR_PX + WATERMARK_H : QR_PX;
+        canvas.width = w;
+        canvas.height = h;
+        ctx.imageSmoothingEnabled = true;
+        ctx.drawImage(img, 0, 0, QR_PX, QR_PX);
+        if (withWatermark) {
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, QR_PX, w, WATERMARK_H);
+          ctx.fillStyle = "#9ca3af";
+          ctx.font = "500 12px system-ui, Segoe UI, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText("Made with QuickQR", w / 2, QR_PX + WATERMARK_H / 2);
+        }
+        resolve();
+      };
+      img.onerror = () => reject(new Error("Image load failed"));
+      img.src = objectUrl;
+    });
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
 export default function GeneratePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -122,27 +169,77 @@ export default function GeneratePage() {
     open: boolean;
     tab: "login" | "register";
   }>({ open: false, tab: "register" });
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [profilePlan, setProfilePlan] = useState<"free" | "pro" | "business" | null>(null);
+  const [planLoaded, setPlanLoaded] = useState(false);
+  const [qrCanvasLoading, setQrCanvasLoading] = useState(false);
+  const [qrCanvasReady, setQrCanvasReady] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
     let mounted = true;
-    const loadUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (mounted) setCurrentUser(user ?? null);
+
+    const applyUserAndPlan = async (user: User | null) => {
+      setCurrentUser(user);
+      if (!user) {
+        setProfilePlan(null);
+        setPlanLoaded(true);
+        return;
+      }
+      setPlanLoaded(false);
+      const { data } = await supabase.from("profiles").select("plan").eq("id", user.id).maybeSingle();
+      if (!mounted) return;
+      const p = data?.plan;
+      if (p === "pro" || p === "business") setProfilePlan(p);
+      else setProfilePlan("free");
+      setPlanLoaded(true);
     };
-    void loadUser();
+
+    void supabase.auth.getUser().then(({ data: { user } }) => {
+      if (mounted) void applyUserAndPlan(user ?? null);
+    });
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      setCurrentUser(session?.user ?? null);
+      if (mounted) void applyUserAndPlan(session?.user ?? null);
     });
+
     return () => {
       mounted = false;
       subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (!qrUrl || !planLoaded) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const paid = profilePlan === "pro" || profilePlan === "business";
+    const withWatermark = !currentUser || !paid;
+
+    let cancelled = false;
+    setQrCanvasLoading(true);
+    setQrCanvasReady(false);
+    void renderQrOnCanvas(canvas, qrUrl, withWatermark)
+      .then(() => {
+        if (!cancelled) {
+          setQrCanvasLoading(false);
+          setQrCanvasReady(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setQrCanvasLoading(false);
+          setQrCanvasReady(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [qrUrl, planLoaded, currentUser, profilePlan]);
 
   const syncQueryFromType = useCallback(
     (id: string) => {
@@ -163,6 +260,13 @@ export default function GeneratePage() {
     setFormValues({});
     setErrors({});
     setQrUrl("");
+    setQrCanvasReady(false);
+    setQrCanvasLoading(false);
+    const c = canvasRef.current;
+    if (c) {
+      c.width = 0;
+      c.height = 0;
+    }
   }, []);
 
   const handleTypeChange = (id: string) => {
@@ -247,16 +351,13 @@ export default function GeneratePage() {
   };
 
 
-  const downloadPng = async () => {
-    if (!qrUrl) return;
-    const res = await fetch(qrUrl);
-    const blob = await res.blob();
-    const href = URL.createObjectURL(blob);
+  const downloadPng = () => {
+    const canvas = canvasRef.current;
+    if (!canvas || !qrCanvasReady || canvas.width === 0) return;
     const a = document.createElement("a");
-    a.href = href;
+    a.href = canvas.toDataURL("image/png");
     a.download = `quickqr-${activeType}-${Date.now()}.png`;
     a.click();
-    URL.revokeObjectURL(href);
   };
 
   const inputClass = (key: string) =>
@@ -564,15 +665,27 @@ export default function GeneratePage() {
           {qrUrl && (
             <div className="bg-white shadow rounded-lg p-6 text-center space-y-4">
               <h2 className="text-lg font-bold mb-4">Your QR Code</h2>
-              <div className="inline-block border-2 border-green-500 rounded-2xl p-4">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={qrUrl} alt="Generated QR code" className="w-[300px] h-[300px] mx-auto" />
+              <div className="inline-block border-2 border-green-500 rounded-2xl p-4 relative min-h-[300px] min-w-[300px]">
+                {qrCanvasLoading && (
+                  <div
+                    className="absolute inset-4 flex items-center justify-center bg-gray-100 rounded-lg animate-pulse text-gray-500 text-sm"
+                    aria-busy
+                  >
+                    Loading preview…
+                  </div>
+                )}
+                <canvas
+                  ref={canvasRef}
+                  className={`mx-auto max-w-full h-auto ${qrCanvasLoading ? "opacity-0" : "opacity-100"}`}
+                  aria-label="Generated QR code"
+                />
               </div>
               <div className="mt-4 flex flex-wrap justify-center gap-4">
                 <button
                   type="button"
                   onClick={downloadPng}
-                  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                  disabled={qrCanvasLoading || !qrCanvasReady}
+                  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Download PNG
                 </button>
