@@ -1,4 +1,5 @@
 import { createClient } from "src/lib/supabase/server";
+import { safeRedirectTarget } from "src/lib/auth/safe-redirect";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
@@ -11,13 +12,14 @@ export async function GET(request: Request) {
     | "recovery"
     | "email_change"
     | null;
-  const next = searchParams.get("next") ?? "/dashboard";
+  const next = searchParams.get("next");
 
   if (token_hash && type) {
     const supabase = await createClient();
     const { error } = await supabase.auth.verifyOtp({ type, token_hash });
     if (!error) {
-      return NextResponse.redirect(new URL(next, request.url));
+      const path = safeRedirectTarget(next, request);
+      return NextResponse.redirect(new URL(path, request.url));
     }
   }
 
