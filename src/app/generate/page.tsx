@@ -109,6 +109,26 @@ function buildQrData(
 
 const QR_PX = 300;
 const WATERMARK_H = 28;
+const FREE_LIMIT = 5;
+
+function getUnauthQrKey(): string {
+  const now = new Date();
+  return `uqr_${now.getFullYear()}_${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function getUnauthQrCount(): number {
+  if (typeof window === "undefined") return 0;
+  const key = getUnauthQrKey();
+  const count = localStorage.getItem(key);
+  return count ? parseInt(count, 10) : 0;
+}
+
+function incrementUnauthQrCount(): void {
+  if (typeof window === "undefined") return;
+  const key = getUnauthQrKey();
+  const count = getUnauthQrCount();
+  localStorage.setItem(key, String(count + 1));
+}
 
 async function downloadQrCanvas(
   proxyUrl: string,
@@ -173,6 +193,7 @@ export default function GeneratePage() {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [limitReachedModal, setLimitReachedModal] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -270,19 +291,28 @@ export default function GeneratePage() {
       setCurrentUser(user ?? null);
 
       if (user) {
-        const { count, error: countError } = await supabase
-          .from("qr_codes")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id);
+        const paid = profilePlan === "pro" || profilePlan === "business";
 
-        if (countError) {
-          setErrors({ _form: countError.message });
-          return;
-        }
+        // Check limit for free plan users only
+        if (!paid) {
+          const now = new Date();
+          const { count, error: countError } = await supabase
+            .from("qr_codes")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .gte("created_at", new Date(now.getFullYear(), now.getMonth(), 1).toISOString());
 
-        if ((count ?? 0) >= 5) {
-          setErrors({ _form: "Free plan limit reached. Upgrade to create more QR codes." });
-          return;
+          if (countError) {
+            setErrors({ _form: countError.message });
+            setSubmitting(false);
+            return;
+          }
+
+          if ((count ?? 0) >= FREE_LIMIT) {
+            setLimitReachedModal(true);
+            setSubmitting(false);
+            return;
+          }
         }
 
         const title =
@@ -304,6 +334,14 @@ export default function GeneratePage() {
           setSavePromptVisible(false);
         }
       } else {
+        // Unauthenticated user: check localStorage limit
+        const unauthCount = getUnauthQrCount();
+        if (unauthCount >= FREE_LIMIT) {
+          setLimitReachedModal(true);
+          setSubmitting(false);
+          return;
+        }
+        incrementUnauthQrCount();
         setSavePromptVisible(true);
       }
     } catch {
@@ -719,6 +757,50 @@ export default function GeneratePage() {
         onClose={() => setAuthModal((prev) => ({ ...prev, open: false }))}
         defaultTab={authModal.tab}
       />
+
+      {limitReachedModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 space-y-6">
+            <div className="text-center">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mb-4">
+                <i className="ri-alert-line text-green-600 text-xl" />
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                You've reached your free limit
+              </h2>
+              <p className="text-gray-600">
+                Upgrade to Pro for unlimited QR codes and advanced analytics.
+              </p>
+            </div>
+
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <p className="text-sm text-gray-700">
+                <span className="font-semibold text-green-700">Pro Plan:</span> 100+ QR codes per month
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => {
+                  router.push("/pricing");
+                  setLimitReachedModal(false);
+                }}
+                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition"
+              >
+                Upgrade to Pro
+              </button>
+              <button
+                type="button"
+                onClick={() => setLimitReachedModal(false)}
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 rounded-lg transition"
+              >
+                Maybe later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
