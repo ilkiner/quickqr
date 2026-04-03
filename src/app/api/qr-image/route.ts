@@ -19,12 +19,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Missing url" }, { status: 400 });
   }
 
-  let target: string;
-  try {
-    target = decodeURIComponent(raw);
-  } catch {
-    return NextResponse.json({ error: "Invalid url" }, { status: 400 });
-  }
+  // searchParams.get() already decodes once — use raw value directly
+  const target = raw;
 
   if (!isAllowedQrServerUrl(target)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
