@@ -10,9 +10,9 @@ const CustomCTA = () => {
        <p className='text-xl text-gray-300 mb-8'> 
         Let us create a tailored QR solution for your business
        </p>
-       <button className='items-center text-white text-lg bg-green-600 hover:bg-green-700 px-6 py-3 rounded-full mt-6 transition'>
+       <a href='/contact' className='inline-block items-center text-white text-lg bg-green-600 hover:bg-green-700 px-6 py-3 rounded-full mt-6 transition'>
         Apply for Custom QR
-       </button>
+       </a>
 
     </div>
     </section>

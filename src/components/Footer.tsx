@@ -24,6 +24,11 @@ export default function Footer() {
               </Link>
             </li>
             <li>
+              <Link href="/pricing" className="hover:text-white transition">
+                Pricing
+              </Link>
+            </li>
+            <li>
               <Link href="/about" className="hover:text-white transition">
                 About
               </Link>
@@ -41,32 +46,17 @@ export default function Footer() {
           <h4 className="text-md font-semibold mb-3">Follow Us</h4>
           <ul className="space-y-2 text-sm">
             <li>
-              <a
-                href="https://www.instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-white transition"
-              >
+              <a href="#" className="hover:text-white transition">
                 Instagram
               </a>
             </li>
             <li>
-              <a
-                href="https://www.facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-white transition"
-              >
+              <a href="#" className="hover:text-white transition">
                 Facebook
               </a>
             </li>
             <li>
-              <a
-                href="https://www.linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-white transition"
-              >
+              <a href="#" className="hover:text-white transition">
                 LinkedIn
               </a>
             </li>
@@ -76,8 +66,7 @@ export default function Footer() {
         {/* Contact */}
         <div>
           <h4 className="text-md font-semibold mb-3">Contact</h4>
-          <p className="text-sm">Email: support@quickqr.com</p>
-          <p className="text-sm">Phone: +48 123 456 789</p>
+          <p className="text-sm">Email: support@qrfast.dev</p>
         </div>
       </div>
 
