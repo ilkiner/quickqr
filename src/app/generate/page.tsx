@@ -109,7 +109,16 @@ function buildQrData(
 
 const QR_PX = 300;
 const WATERMARK_H = 28;
+const FRAME_H = 40;
 const FREE_LIMIT = 5;
+
+const FRAME_OPTIONS = [
+  { value: "", label: "No Frame" },
+  { value: "Beni Tara", label: "Beni Tara" },
+  { value: "Menüye Bak", label: "Menüye Bak" },
+  { value: "Bize Puan Ver", label: "Bize Puan Ver" },
+  { value: "Wi-Fi için Tara", label: "Wi-Fi için Tara" },
+];
 
 function getUnauthQrKey(): string {
   const now = new Date();
@@ -133,7 +142,8 @@ function incrementUnauthQrCount(): void {
 async function downloadQrCanvas(
   proxyUrl: string,
   withWatermark: boolean,
-  filename: string
+  filename: string,
+  frameLabel: string
 ): Promise<void> {
   const res = await fetch(proxyUrl);
   if (!res.ok) throw new Error("QR fetch failed");
@@ -143,20 +153,32 @@ async function downloadQrCanvas(
     await new Promise<void>((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
+        const frameH = frameLabel ? FRAME_H : 0;
         const canvas = document.createElement("canvas");
         canvas.width = QR_PX;
-        canvas.height = withWatermark ? QR_PX + WATERMARK_H : QR_PX;
+        canvas.height = QR_PX + frameH + (withWatermark ? WATERMARK_H : 0);
         const ctx = canvas.getContext("2d");
         if (!ctx) { reject(new Error("No canvas context")); return; }
         ctx.drawImage(img, 0, 0, QR_PX, QR_PX);
+        let yOffset = QR_PX;
+        if (frameLabel) {
+          ctx.fillStyle = "#16a34a";
+          ctx.fillRect(0, yOffset, QR_PX, FRAME_H);
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "bold 16px system-ui, Segoe UI, sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(frameLabel, QR_PX / 2, yOffset + FRAME_H / 2);
+          yOffset += FRAME_H;
+        }
         if (withWatermark) {
           ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, QR_PX, QR_PX, WATERMARK_H);
+          ctx.fillRect(0, yOffset, QR_PX, WATERMARK_H);
           ctx.fillStyle = "#9ca3af";
           ctx.font = "500 12px system-ui, Segoe UI, sans-serif";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.fillText("Made with QuickQR", QR_PX / 2, QR_PX + WATERMARK_H / 2);
+          ctx.fillText("Made with QuickQR", QR_PX / 2, yOffset + WATERMARK_H / 2);
         }
         const a = document.createElement("a");
         a.href = canvas.toDataURL("image/png");
@@ -194,6 +216,9 @@ export default function GeneratePage() {
   const [imgError, setImgError] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [limitReachedModal, setLimitReachedModal] = useState(false);
+  const [qrColor, setQrColor] = useState("#000000");
+  const [bgColor, setBgColor] = useState("#ffffff");
+  const [frameLabel, setFrameLabel] = useState("");
 
   useEffect(() => {
     const supabase = createClient();
@@ -276,7 +301,8 @@ export default function GeneratePage() {
     setErrors({});
     setSubmitting(true);
     const encoded = encodeURIComponent(data);
-    const generatedUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encoded}`;
+    const colorParam = `&color=${qrColor.replace("#", "")}&bgcolor=${bgColor.replace("#", "")}`;
+    const generatedUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encoded}${colorParam}`;
     const proxyUrl = `/api/qr-image?url=${encodeURIComponent(generatedUrl)}`;
     setQrUrl(generatedUrl);
     setQrProxyUrl(proxyUrl);
@@ -368,7 +394,8 @@ export default function GeneratePage() {
       await downloadQrCanvas(
         qrProxyUrl,
         withWatermark,
-        `quickqr-${activeType}-${Date.now()}.png`
+        `quickqr-${activeType}-${Date.now()}.png`,
+        frameLabel
       );
     } catch {
       setErrors({ _form: "Download failed. Please try again." });
@@ -679,9 +706,55 @@ export default function GeneratePage() {
             )}
           </div>
 
+          <div className="bg-white shadow rounded-lg p-6">
+            <h2 className="text-lg font-bold mb-4">Customize Colors</h2>
+            <div className="flex flex-wrap gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">QR Color</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={qrColor}
+                    onChange={(e) => setQrColor(e.target.value)}
+                    className="w-10 h-10 rounded cursor-pointer border border-gray-300"
+                  />
+                  <span className="text-sm text-gray-500 font-mono">{qrColor}</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Background Color</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={bgColor}
+                    onChange={(e) => setBgColor(e.target.value)}
+                    className="w-10 h-10 rounded cursor-pointer border border-gray-300"
+                  />
+                  <span className="text-sm text-gray-500 font-mono">{bgColor}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {qrUrl && (
             <div className="bg-white shadow rounded-lg p-6 text-center space-y-4">
               <h2 className="text-lg font-bold mb-4">Your QR Code</h2>
+              <div className="flex flex-wrap gap-2 justify-center mb-2">
+                {FRAME_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setFrameLabel(opt.value)}
+                    className={`px-3 py-1.5 text-sm rounded-full border transition ${
+                      frameLabel === opt.value
+                        ? "bg-green-600 text-white border-green-600"
+                        : "bg-white text-gray-600 border-gray-300 hover:border-green-400"
+                    }`}
+                  >
+                    {opt.label || "No Frame"}
+                  </button>
+                ))}
+              </div>
               <div className="inline-flex flex-col items-center border-2 border-green-500 rounded-2xl p-4">
                 <div className="relative w-[300px] h-[300px]">
                   {!imgLoaded && !imgError && (
@@ -705,6 +778,14 @@ export default function GeneratePage() {
                     onError={() => setImgError(true)}
                   />
                 </div>
+                {imgLoaded && frameLabel && (
+                  <div
+                    className="w-[300px] flex items-center justify-center font-bold text-white text-base"
+                    style={{ backgroundColor: "#16a34a", height: `${FRAME_H}px` }}
+                  >
+                    {frameLabel}
+                  </div>
+                )}
                 {imgLoaded && (!currentUser || !(profilePlan === "pro" || profilePlan === "business")) && (
                   <p className="text-xs text-gray-400 mt-2 tracking-wide">Made with QuickQR</p>
                 )}
