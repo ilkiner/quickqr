@@ -148,9 +148,13 @@ async function downloadQrCanvas(
   const res = await fetch(proxyUrl);
   if (!res.ok) throw new Error("QR fetch failed");
   const blob = await res.blob();
-  const objectUrl = URL.createObjectURL(blob);
-  try {
-    await new Promise<void>((resolve, reject) => {
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("FileReader failed"));
+    reader.readAsDataURL(blob);
+  });
+  await new Promise<void>((resolve, reject) => {
       const img = new Image();
       img.onload = () => {
         const frameH = frameLabel ? FRAME_H : 0;
@@ -187,11 +191,8 @@ async function downloadQrCanvas(
         resolve();
       };
       img.onerror = () => reject(new Error("Image load failed"));
-      img.src = objectUrl;
+      img.src = dataUrl;
     });
-  } finally {
-    URL.revokeObjectURL(objectUrl);
-  }
 }
 
 export default function GeneratePage() {
