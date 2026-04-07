@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import Header from "src/components/Header";
 import Footer from "src/components/Footer";
 import { createClient } from "src/lib/supabase/client";
@@ -25,6 +27,16 @@ const planLimitMap: Record<string, string> = {
   pro: "100",
   business: "∞",
 };
+
+function SuccessBanner() {
+  const searchParams = useSearchParams();
+  if (searchParams.get("success") !== "true") return null;
+  return (
+    <div className="rounded-lg bg-green-50 border border-green-200 p-4 text-sm text-green-800">
+      Payment successful! Your plan has been upgraded. It may take a few seconds to reflect below.
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -127,6 +139,10 @@ export default function DashboardPage() {
       <Header />
       <main className="min-h-screen bg-gray-50 pt-24 pb-16 px-4">
         <div className="max-w-6xl mx-auto space-y-6">
+          <Suspense fallback={null}>
+            <SuccessBanner />
+          </Suspense>
+
           <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="space-y-2">
               <h1 className="text-2xl font-bold text-gray-900">Welcome back, {displayName}!</h1>
