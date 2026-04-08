@@ -67,12 +67,32 @@ export default function Footer() {
         <div>
           <h4 className="text-md font-semibold mb-3">Contact</h4>
           <p className="text-sm">Email: support@qrfast.dev</p>
+          <ul className="mt-3 space-y-2 text-sm">
+            <li>
+              <Link href="/privacy" className="hover:text-white transition">
+                Privacy Policy
+              </Link>
+            </li>
+            <li>
+              <Link href="/terms" className="hover:text-white transition">
+                Terms of Service
+              </Link>
+            </li>
+          </ul>
         </div>
       </div>
 
       {/* Copyright */}
       <div className="text-center text-sm text-gray-500 py-4 border-t border-gray-700">
         © {new Date().getFullYear()} QuickQR. All rights reserved.
+        {" · "}
+        <Link href="/privacy" className="hover:text-gray-300 transition">
+          Privacy Policy
+        </Link>
+        {" · "}
+        <Link href="/terms" className="hover:text-gray-300 transition">
+          Terms of Service
+        </Link>
       </div>
     </footer>
   );
