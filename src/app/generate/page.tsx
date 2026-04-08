@@ -56,13 +56,28 @@ function buildQrData(
   values: Record<string, string>
 ): { data: string; error?: string } {
   switch (activeType) {
-    case "restaurant":
-    case "social":
-    case "location": {
+    case "restaurant": {
       const url = values.url?.trim() ?? "";
       if (!url) return { data: "", error: "URL is required" };
       if (!isValidHttpUrl(url)) return { data: "", error: "Enter a valid URL starting with http:// or https://" };
       return { data: url };
+    }
+    case "social": {
+      const filled = SOCIAL_PLATFORMS
+        .map((p) => ({ label: p.label, url: values[p.key]?.trim() ?? "" }))
+        .filter((p) => p.url);
+      if (filled.length === 0) return { data: "", error: "Add at least one social media link" };
+      for (const { url } of filled) {
+        if (!isValidHttpUrl(url)) return { data: "", error: `Enter a valid URL starting with https://` };
+      }
+      if (filled.length === 1) return { data: filled[0].url };
+      return { data: filled.map(({ label, url }) => `${label}: ${url}`).join("\n") };
+    }
+    case "location": {
+      const address = values.address?.trim() ?? "";
+      if (!address) return { data: "", error: "Address is required" };
+      const query = [values.businessName?.trim(), address].filter(Boolean).join(", ");
+      return { data: `https://maps.google.com/?q=${encodeURIComponent(query)}` };
     }
     case "vcard": {
       const name = values.name?.trim() ?? "";
@@ -118,6 +133,16 @@ const FRAME_OPTIONS = [
   { value: "Menüye Bak", label: "Menüye Bak" },
   { value: "Bize Puan Ver", label: "Bize Puan Ver" },
   { value: "Wi-Fi için Tara", label: "Wi-Fi için Tara" },
+  { value: "Bize Yol Tarifi Al", label: "Bize Yol Tarifi Al" },
+];
+
+const SOCIAL_PLATFORMS = [
+  { key: "instagram", label: "Instagram", icon: "ri-instagram-line", placeholder: "https://instagram.com/yourbrand" },
+  { key: "twitter", label: "Twitter / X", icon: "ri-twitter-x-line", placeholder: "https://x.com/yourbrand" },
+  { key: "linkedin", label: "LinkedIn", icon: "ri-linkedin-box-line", placeholder: "https://linkedin.com/in/yourprofile" },
+  { key: "tiktok", label: "TikTok", icon: "ri-tiktok-line", placeholder: "https://tiktok.com/@yourbrand" },
+  { key: "facebook", label: "Facebook", icon: "ri-facebook-circle-line", placeholder: "https://facebook.com/yourbrand" },
+  { key: "youtube", label: "YouTube", icon: "ri-youtube-line", placeholder: "https://youtube.com/@yourchannel" },
 ];
 
 function getUnauthQrKey(): string {
@@ -220,6 +245,7 @@ export default function GeneratePage() {
   const [qrColor, setQrColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#ffffff");
   const [frameLabel, setFrameLabel] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -286,6 +312,9 @@ export default function GeneratePage() {
     setActiveType(id);
     resetForm();
     syncQueryFromType(id);
+    if (id === "wifi") setFrameLabel("Wi-Fi için Tara");
+    else if (id === "location") setFrameLabel("Bize Yol Tarifi Al");
+    else setFrameLabel("");
   };
 
   const setField = (key: string, value: string) => {
@@ -517,23 +546,30 @@ export default function GeneratePage() {
             )}
 
             {activeType === "social" && (
-              <form noValidate onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Profile or page URL</label>
-                  <input
-                    type="url"
-                    autoComplete="url"
-                    value={formValues.url ?? ""}
-                    onChange={(e) => setField("url", e.target.value)}
-                    placeholder="https://instagram.com/yourbrand"
-                    className={inputClass("url")}
-                  />
-                  {fieldError("url")}
-                </div>
+              <form noValidate onSubmit={handleSubmit} className="space-y-3">
+                <p className="text-sm text-gray-500 mb-1">Fill in one or more platforms. Leave the rest empty.</p>
+                {SOCIAL_PLATFORMS.map((platform) => (
+                  <div key={platform.key}>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{platform.label}</label>
+                    <div className="flex items-center gap-2">
+                      <span className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-md bg-gray-100 text-gray-600">
+                        <i className={`${platform.icon} text-lg`} aria-hidden />
+                      </span>
+                      <input
+                        type="url"
+                        autoComplete="url"
+                        value={formValues[platform.key] ?? ""}
+                        onChange={(e) => setField(platform.key, e.target.value)}
+                        placeholder={platform.placeholder}
+                        className={`flex-1 border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 ${errors[platform.key] ? "border-red-500" : "border-gray-300"}`}
+                      />
+                    </div>
+                  </div>
+                ))}
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-semibold"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-semibold mt-2"
                 >
                   {submitting ? "Generating..." : "Generate QR Code"}
                 </button>
@@ -543,17 +579,39 @@ export default function GeneratePage() {
             {activeType === "location" && (
               <form noValidate onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Google Maps URL</label>
+                  <label className="block text-sm font-medium text-gray-700">Business Name <span className="text-gray-400 font-normal">(optional)</span></label>
                   <input
-                    type="url"
-                    autoComplete="url"
-                    value={formValues.url ?? ""}
-                    onChange={(e) => setField("url", e.target.value)}
-                    placeholder="https://maps.google.com/?q=..."
-                    className={inputClass("url")}
+                    type="text"
+                    autoComplete="organization"
+                    value={formValues.businessName ?? ""}
+                    onChange={(e) => setField("businessName", e.target.value)}
+                    placeholder="e.g. QuickQR Cafe"
+                    className={inputClass("businessName")}
                   />
-                  {fieldError("url")}
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Address</label>
+                  <input
+                    type="text"
+                    autoComplete="street-address"
+                    value={formValues.address ?? ""}
+                    onChange={(e) => setField("address", e.target.value)}
+                    placeholder="e.g. 123 Main St, New York, NY"
+                    className={inputClass("address")}
+                  />
+                  {fieldError("address")}
+                </div>
+                {(formValues.address ?? "").trim() && (
+                  <p className="text-xs text-gray-500 bg-gray-50 rounded-md px-3 py-2 break-all">
+                    <span className="font-medium text-gray-700">Generated link: </span>
+                    {`https://maps.google.com/?q=${encodeURIComponent(
+                      [formValues.businessName?.trim(), formValues.address?.trim()].filter(Boolean).join(", ")
+                    )}`}
+                  </p>
+                )}
+                <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">
+                  <i className="ri-map-pin-line mr-1" aria-hidden /> Frame <strong>"Bize Yol Tarifi Al"</strong> is pre-selected for you.
+                </p>
                 <button
                   type="submit"
                   disabled={submitting}
@@ -675,27 +733,43 @@ export default function GeneratePage() {
                   {fieldError("ssid")}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Password</label>
-                  <input
-                    type="password"
-                    autoComplete="new-password"
-                    value={formValues.password ?? ""}
-                    onChange={(e) => setField("password", e.target.value)}
-                    className={inputClass("password")}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Security</label>
+                  <label className="block text-sm font-medium text-gray-700">Security Type</label>
                   <select
                     value={formValues.security ?? "WPA"}
                     onChange={(e) => setField("security", e.target.value)}
                     className="mt-1 w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
                   >
-                    <option value="WPA">WPA/WPA2</option>
+                    <option value="WPA">WPA / WPA2</option>
+                    <option value="WPA3">WPA3</option>
                     <option value="WEP">WEP</option>
-                    <option value="nopass">None (open network)</option>
+                    <option value="nopass">Open (no password)</option>
                   </select>
                 </div>
+                {(formValues.security ?? "WPA") !== "nopass" && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Password</label>
+                    <div className="relative mt-1">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        autoComplete="new-password"
+                        value={formValues.password ?? ""}
+                        onChange={(e) => setField("password", e.target.value)}
+                        className={`w-full border rounded-md px-4 py-2 pr-11 focus:outline-none focus:ring-2 focus:ring-green-500 ${errors.password ? "border-red-500" : "border-gray-300"}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((v) => !v)}
+                        className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-700 transition"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                      >
+                        <i className={showPassword ? "ri-eye-off-line text-lg" : "ri-eye-line text-lg"} aria-hidden />
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2">
+                  <i className="ri-wifi-line mr-1" aria-hidden /> Frame <strong>"Wi-Fi için Tara"</strong> is pre-selected for you.
+                </p>
                 <button
                   type="submit"
                   disabled={submitting}
