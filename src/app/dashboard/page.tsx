@@ -206,6 +206,35 @@ export default function DashboardPage() {
             </Link>
           </div>
 
+          {(plan === "pro" || plan === "business") && (
+            <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="space-y-1">
+                <h2 className="text-lg font-bold text-gray-900">Custom QR Design</h2>
+                <p className="text-sm text-gray-500">
+                  Get a professionally designed QR code tailored to your brand.
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span
+                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                    plan === "business"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-green-50 text-green-600"
+                  }`}
+                >
+                  {plan === "business" ? "30% off for Business members" : "20% off for Pro members"}
+                </span>
+                <Link
+                  href="/custom-design"
+                  className="inline-flex items-center gap-2 bg-gray-900 hover:bg-black text-white px-4 py-2 rounded-md font-medium transition whitespace-nowrap"
+                >
+                  <i className="ri-palette-line text-lg" aria-hidden />
+                  Request Custom Design
+                </Link>
+              </div>
+            </section>
+          )}
+
           <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
             <h2 className="text-lg font-bold text-gray-900 mb-4">QR History</h2>
             {loading ? (
