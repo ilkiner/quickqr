@@ -246,6 +246,7 @@ export default function GeneratePage() {
   const [bgColor, setBgColor] = useState("#ffffff");
   const [frameLabel, setFrameLabel] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isDynamic, setIsDynamic] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -330,14 +331,11 @@ export default function GeneratePage() {
     }
     setErrors({});
     setSubmitting(true);
-    const encoded = encodeURIComponent(data);
+
+    const paid = profilePlan === "pro" || profilePlan === "business";
+    const dynamicEnabled = isDynamic && paid;
+
     const colorParam = `&color=${qrColor.replace("#", "")}&bgcolor=${bgColor.replace("#", "")}`;
-    const generatedUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encoded}${colorParam}`;
-    const proxyUrl = `/api/qr-image?url=${encodeURIComponent(generatedUrl)}`;
-    setQrUrl(generatedUrl);
-    setQrProxyUrl(proxyUrl);
-    setImgLoaded(false);
-    setImgError(false);
 
     try {
       const supabase = createClient();
@@ -347,8 +345,6 @@ export default function GeneratePage() {
       setCurrentUser(user ?? null);
 
       if (user) {
-        const paid = profilePlan === "pro" || profilePlan === "business";
-
         // Check limit for free plan users only
         if (!paid) {
           const now = new Date();
@@ -377,20 +373,75 @@ export default function GeneratePage() {
           qrTypes.find((item) => item.id === activeType)?.label ||
           "QR Code";
 
-        const { error: insertError } = await supabase.from("qr_codes").insert({
-          user_id: user.id,
-          type: activeType,
-          title,
-          data,
-          qr_url: generatedUrl,
-        });
-        if (insertError) {
-          setErrors({ _form: insertError.message });
-        } else {
+        if (dynamicEnabled) {
+          // Dynamic QR: insert first, then build QR with redirect URL
+          const { data: inserted, error: insertError } = await supabase
+            .from("qr_codes")
+            .insert({
+              user_id: user.id,
+              type: activeType,
+              title,
+              data,
+              qr_url: "",
+              is_dynamic: true,
+              redirect_url: data,
+            })
+            .select("id")
+            .single();
+
+          if (insertError || !inserted) {
+            setErrors({ _form: insertError?.message ?? "Failed to create dynamic QR" });
+            setSubmitting(false);
+            return;
+          }
+
+          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+          const dynamicData = `${baseUrl}/r/${inserted.id}`;
+          const encoded = encodeURIComponent(dynamicData);
+          const generatedUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encoded}${colorParam}`;
+          const proxyUrl = `/api/qr-image?url=${encodeURIComponent(generatedUrl)}`;
+
+          // Update the record with the QR image URL
+          await supabase.from("qr_codes").update({ qr_url: generatedUrl }).eq("id", inserted.id);
+
+          setQrUrl(generatedUrl);
+          setQrProxyUrl(proxyUrl);
+          setImgLoaded(false);
+          setImgError(false);
           setSavePromptVisible(false);
+        } else {
+          // Static QR: existing flow
+          const encoded = encodeURIComponent(data);
+          const generatedUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encoded}${colorParam}`;
+          const proxyUrl = `/api/qr-image?url=${encodeURIComponent(generatedUrl)}`;
+          setQrUrl(generatedUrl);
+          setQrProxyUrl(proxyUrl);
+          setImgLoaded(false);
+          setImgError(false);
+
+          const { error: insertError } = await supabase.from("qr_codes").insert({
+            user_id: user.id,
+            type: activeType,
+            title,
+            data,
+            qr_url: generatedUrl,
+          });
+          if (insertError) {
+            setErrors({ _form: insertError.message });
+          } else {
+            setSavePromptVisible(false);
+          }
         }
       } else {
         // Unauthenticated user: check localStorage limit
+        const encoded = encodeURIComponent(data);
+        const generatedUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encoded}${colorParam}`;
+        const proxyUrl = `/api/qr-image?url=${encodeURIComponent(generatedUrl)}`;
+        setQrUrl(generatedUrl);
+        setQrProxyUrl(proxyUrl);
+        setImgLoaded(false);
+        setImgError(false);
+
         const unauthCount = getUnauthQrCount();
         if (unauthCount >= FREE_LIMIT) {
           setLimitReachedModal(true);
@@ -780,6 +831,40 @@ export default function GeneratePage() {
               </form>
             )}
           </div>
+
+          {planLoaded && (profilePlan === "pro" || profilePlan === "business") && (
+            <div className="bg-white shadow rounded-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold">Dynamic QR</h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Change the destination URL anytime without reprinting the QR code.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={isDynamic}
+                  onClick={() => setIsDynamic((v) => !v)}
+                  className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                    isDynamic ? "bg-green-600" : "bg-gray-200"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-6 w-6 rounded-full bg-white shadow transform transition-transform ${
+                      isDynamic ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
+              </div>
+              {isDynamic && (
+                <p className="text-xs text-green-700 bg-green-50 border border-green-200 rounded-md px-3 py-2 mt-3">
+                  <i className="ri-links-line mr-1" aria-hidden />
+                  Your QR will point to a redirect URL. You can update the destination from your Dashboard anytime.
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-lg font-bold mb-4">Customize Colors</h2>

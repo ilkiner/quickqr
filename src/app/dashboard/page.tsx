@@ -20,6 +20,8 @@ type QrCodeRow = {
   qr_url: string | null;
   scan_count: number | null;
   created_at: string;
+  is_dynamic: boolean | null;
+  redirect_url: string | null;
 };
 
 const planLimitMap: Record<string, string> = {
@@ -43,6 +45,8 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
   const [qrRows, setQrRows] = useState<QrCodeRow[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editUrl, setEditUrl] = useState("");
 
   const loadData = useCallback(async () => {
     try {
@@ -69,7 +73,7 @@ export default function DashboardPage() {
             .maybeSingle(),
           supabase
             .from("qr_codes")
-            .select("id, type, title, qr_url, scan_count, created_at")
+            .select("id, type, title, qr_url, scan_count, created_at, is_dynamic, redirect_url")
             .eq("user_id", user.id)
             .order("created_at", { ascending: false }),
         ]);
@@ -132,6 +136,24 @@ export default function DashboardPage() {
     a.download = `quickqr-${row.type}-${Date.now()}.png`;
     a.click();
     URL.revokeObjectURL(href);
+  };
+
+  const handleSaveUrl = async (id: string) => {
+    if (!editUrl.trim()) return;
+    const supabase = createClient();
+    const { error: updateError } = await supabase
+      .from("qr_codes")
+      .update({ redirect_url: editUrl.trim() })
+      .eq("id", id);
+    if (updateError) {
+      setError(updateError.message);
+      return;
+    }
+    setQrRows((prev) =>
+      prev.map((row) => (row.id === id ? { ...row, redirect_url: editUrl.trim() } : row))
+    );
+    setEditingId(null);
+    setEditUrl("");
   };
 
   return (
@@ -268,12 +290,61 @@ export default function DashboardPage() {
                   <tbody>
                     {qrRows.map((row) => (
                       <tr key={row.id} className="border-b last:border-b-0">
-                        <td className="py-3 pr-4 capitalize">{row.type}</td>
+                        <td className="py-3 pr-4 capitalize">
+                          <span className="flex items-center gap-1.5">
+                            {row.type}
+                            {row.is_dynamic && (
+                              <span className="inline-flex items-center bg-green-50 text-green-700 text-xs font-medium px-1.5 py-0.5 rounded">
+                                Dynamic
+                              </span>
+                            )}
+                          </span>
+                        </td>
                         <td className="py-3 pr-4">{row.title || "-"}</td>
                         <td className="py-3 pr-4">{new Date(row.created_at).toLocaleDateString()}</td>
                         <td className="py-3 pr-4">{row.scan_count ?? 0}</td>
                         <td className="py-3">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {row.is_dynamic && (
+                              editingId === row.id ? (
+                                <div className="flex items-center gap-1">
+                                  <input
+                                    type="url"
+                                    value={editUrl}
+                                    onChange={(e) => setEditUrl(e.target.value)}
+                                    className="border border-gray-300 rounded-md px-2 py-1 text-sm w-48 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                    placeholder="https://..."
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") void handleSaveUrl(row.id);
+                                      if (e.key === "Escape") { setEditingId(null); setEditUrl(""); }
+                                    }}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => void handleSaveUrl(row.id)}
+                                    className="px-2 py-1 bg-green-600 text-white rounded-md text-sm hover:bg-green-700"
+                                  >
+                                    Save
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => { setEditingId(null); setEditUrl(""); }}
+                                    className="px-2 py-1 border border-gray-200 rounded-md text-sm hover:bg-gray-50"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => { setEditingId(row.id); setEditUrl(row.redirect_url ?? ""); }}
+                                  className="px-3 py-1 border border-green-200 text-green-700 rounded-md hover:bg-green-50"
+                                >
+                                  Edit URL
+                                </button>
+                              )
+                            )}
                             <button
                               type="button"
                               onClick={() => void handleDownload(row)}
