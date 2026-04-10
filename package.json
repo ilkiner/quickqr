@@ -17,6 +17,7 @@
     "react-dom": "19.1.0",
     "remixicon": "^4.7.0",
     "remixicon-react": "^1.0.0",
+    "resend": "^6.10.0",
     "stripe": "^22.0.0"
   },
   "devDependencies": {
