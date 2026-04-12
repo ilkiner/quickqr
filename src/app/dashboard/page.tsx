@@ -48,6 +48,7 @@ export default function DashboardPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editUrl, setEditUrl] = useState("");
   const [monthlyCreatedCount, setMonthlyCreatedCount] = useState(0);
+  const [totalCreatedCount, setTotalCreatedCount] = useState(0);
 
   const loadData = useCallback(async () => {
     try {
@@ -87,16 +88,23 @@ export default function DashboardPage() {
         setError(qrError.message);
       }
 
-      // Count all QR codes created this month (including deleted) for limit
+      // Count all QR codes (including deleted) for stats and limit
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-      const { count: monthCount } = await supabase
-        .from("qr_codes")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .gte("created_at", monthStart);
+      const [{ count: monthCount }, { count: totalCount }] = await Promise.all([
+        supabase
+          .from("qr_codes")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .gte("created_at", monthStart),
+        supabase
+          .from("qr_codes")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id),
+      ]);
 
       setMonthlyCreatedCount(monthCount ?? 0);
+      setTotalCreatedCount(totalCount ?? 0);
       setProfile((profileData as Profile | null) ?? null);
       setQrRows((qrData as QrCodeRow[] | null) ?? []);
     } catch {
@@ -117,15 +125,6 @@ export default function DashboardPage() {
     () => qrRows.reduce((sum, row) => sum + (row.scan_count ?? 0), 0),
     [qrRows]
   );
-  const thisMonthCount = useMemo(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    return qrRows.filter((row) => {
-      const created = new Date(row.created_at);
-      return created.getMonth() === currentMonth && created.getFullYear() === currentYear;
-    }).length;
-  }, [qrRows]);
   const limitReached =
     (plan === "free" && monthlyCreatedCount >= 5) ||
     (plan === "pro" && monthlyCreatedCount >= 100);
@@ -219,7 +218,7 @@ export default function DashboardPage() {
               <>
                 <div className="bg-white rounded-lg p-4 border border-gray-100">
                   <p className="text-sm text-gray-500">QR Codes Created</p>
-                  <p className="text-2xl font-bold text-gray-900">{qrRows.length}</p>
+                  <p className="text-2xl font-bold text-gray-900">{totalCreatedCount}</p>
                 </div>
                 <div className="bg-white rounded-lg p-4 border border-gray-100">
                   <p className="text-sm text-gray-500">Total Scans</p>
@@ -227,7 +226,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="bg-white rounded-lg p-4 border border-gray-100">
                   <p className="text-sm text-gray-500">This Month</p>
-                  <p className="text-2xl font-bold text-gray-900">{thisMonthCount}</p>
+                  <p className="text-2xl font-bold text-gray-900">{monthlyCreatedCount}</p>
                 </div>
                 <div className="bg-white rounded-lg p-4 border border-gray-100">
                   <p className="text-sm text-gray-500">Plan Limit</p>
