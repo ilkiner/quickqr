@@ -1,2 +1,33 @@
 @import "tailwindcss";
 @import "remixicon/fonts/remixicon.css";
+
+/* ── Animated gradient text ─────────────────────────────────────── */
+@keyframes gradient-shift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animated-gradient-text {
+  background: linear-gradient(120deg, #16a34a, #4ade80, #15803d, #86efac, #16a34a);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* ── Subtle pulse for CTA button ────────────────────────────────── */
+@keyframes soft-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(22, 163, 74, 0); }
+}
+
+.btn-pulse {
+  animation: soft-pulse 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* ── Dark mode base ─────────────────────────────────────────────── */
+html.dark {
+  color-scheme: dark;
+}

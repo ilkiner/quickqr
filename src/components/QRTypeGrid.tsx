@@ -14,28 +14,28 @@ const qrTypes = [
 
 export default function QRTypeGrid() {
   return (
-    <section id="qr-types" className="w-full py-16 bg-gray-50">
+    <section id="qr-types" className="w-full py-16 bg-gray-50 dark:bg-[#0a0a0a] transition-colors duration-200">
       <div className="max-w-6xl mx-auto px-4">
-        <h2 className="text-4xl font-bold text-center mb-8 text-gray-900">
+        <h2 className="text-4xl font-bold text-center mb-8 text-gray-900 dark:text-gray-100">
           Choose Your QR Type
         </h2>
-        <p className="text-center text-xl text-gray-600 mb-10">
+        <p className="text-center text-xl text-gray-600 dark:text-gray-400 mb-10">
           Select from our range of specialized QR codes
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {qrTypes.map((type, index) => (
             <div
               key={index}
-              className="bg-white p-8 rounded-xl shadow hover:shadow-md hover:scale-[1.02] hover:shadow-green-600 transition-all cursor-pointer"
+              className="bg-white dark:bg-[#141414] border border-gray-100 dark:border-white/10 p-8 rounded-xl shadow hover:shadow-lg hover:shadow-green-500/20 hover:scale-105 transition-all duration-300 cursor-pointer"
+              style={{ transitionTimingFunction: "cubic-bezier(0.4,0,0.2,1)" }}
             >
               <div className="text-4xl mb-4">{type.icon}</div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-2">{type.title}</h3>
-              <p className="text-gray-600 text-sm mb-4">{type.desc}</p>
-
-             
+              <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-2">{type.title}</h3>
+              <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">{type.desc}</p>
               <Link
                 href={`/generate?type=${type.param}`}
-                className="mt-auto block bg-black hover:bg-green-600 text-white text-center py-2 px-6 rounded-2xl text-sm transition"
+                className="mt-auto block bg-black dark:bg-white/10 hover:bg-green-600 dark:hover:bg-green-600 text-white text-center py-2 px-6 rounded-2xl text-sm transition-all duration-200"
+                style={{ transitionTimingFunction: "cubic-bezier(0.4,0,0.2,1)" }}
               >
                 Generate Now
               </Link>

@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function PricingPage() {
   return (
-    <main className="min-h-screen py-12 bg-gray-50">
+    <main className="min-h-screen py-12 bg-gray-50 dark:bg-[#0a0a0a] transition-colors duration-200">
       <PricingSection />
       <FAQ />
     </main>

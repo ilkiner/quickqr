@@ -216,21 +216,41 @@ export default function DashboardPage() {
               ))
             ) : (
               <>
-                <div className="bg-white rounded-lg p-4 border border-gray-100">
-                  <p className="text-sm text-gray-500">QR Codes Created</p>
-                  <p className="text-2xl font-bold text-gray-900">{totalCreatedCount}</p>
+                <div className="bg-gradient-to-br from-[#141414] to-[#1a1a1a] rounded-xl p-4 border border-white/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">QR Codes Created</p>
+                    <div className="w-7 h-7 bg-green-600/20 rounded-lg flex items-center justify-center">
+                      <i className="ri-qr-code-line text-green-500 text-sm" />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-white">{totalCreatedCount}</p>
                 </div>
-                <div className="bg-white rounded-lg p-4 border border-gray-100">
-                  <p className="text-sm text-gray-500">Total Scans</p>
-                  <p className="text-2xl font-bold text-gray-900">{totalScans}</p>
+                <div className="bg-gradient-to-br from-[#141414] to-[#1a1a1a] rounded-xl p-4 border border-white/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Total Scans</p>
+                    <div className="w-7 h-7 bg-green-600/20 rounded-lg flex items-center justify-center">
+                      <i className="ri-bar-chart-2-line text-green-500 text-sm" />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-white">{totalScans}</p>
                 </div>
-                <div className="bg-white rounded-lg p-4 border border-gray-100">
-                  <p className="text-sm text-gray-500">This Month</p>
-                  <p className="text-2xl font-bold text-gray-900">{monthlyCreatedCount}</p>
+                <div className="bg-gradient-to-br from-[#141414] to-[#1a1a1a] rounded-xl p-4 border border-white/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">This Month</p>
+                    <div className="w-7 h-7 bg-green-600/20 rounded-lg flex items-center justify-center">
+                      <i className="ri-calendar-line text-green-500 text-sm" />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-white">{monthlyCreatedCount}</p>
                 </div>
-                <div className="bg-white rounded-lg p-4 border border-gray-100">
-                  <p className="text-sm text-gray-500">Plan Limit</p>
-                  <p className="text-2xl font-bold text-gray-900">{planLimit}</p>
+                <div className="bg-gradient-to-br from-[#141414] to-[#1a1a1a] rounded-xl p-4 border border-white/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Plan Limit</p>
+                    <div className="w-7 h-7 bg-green-600/20 rounded-lg flex items-center justify-center">
+                      <i className="ri-shield-check-line text-green-500 text-sm" />
+                    </div>
+                  </div>
+                  <p className="text-2xl font-bold text-white">{planLimit}</p>
                 </div>
               </>
             )}
