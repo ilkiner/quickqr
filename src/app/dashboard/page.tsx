@@ -386,6 +386,24 @@ export default function DashboardPage() {
               </div>
             )}
           </section>
+
+          {(plan === "pro" || plan === "business") && (
+            <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="space-y-1">
+                <h2 className="text-lg font-bold text-gray-900">My vCard Profile</h2>
+                <p className="text-sm text-gray-500">
+                  Create a shareable digital business card with a scannable QR code.
+                </p>
+              </div>
+              <Link
+                href="/dashboard/vcard"
+                className="inline-flex items-center gap-2 bg-gray-900 hover:bg-black text-white px-4 py-2 rounded-md font-medium transition whitespace-nowrap"
+              >
+                <i className="ri-id-card-line text-lg" aria-hidden />
+                Edit vCard Profile
+              </Link>
+            </section>
+          )}
         </div>
       </main>
       <Footer />

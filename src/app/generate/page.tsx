@@ -312,6 +312,12 @@ export default function GeneratePage() {
     if (id) setActiveType(id);
   }, [searchParams]);
 
+  // Pre-fill URL field when ?data= param is provided (e.g. from vCard Generate QR button)
+  useEffect(() => {
+    const data = searchParams.get("data");
+    if (data) setFormValues((prev) => ({ ...prev, url: data }));
+  }, [searchParams]);
+
   const resetForm = useCallback(() => {
     setFormValues({});
     setErrors({});
