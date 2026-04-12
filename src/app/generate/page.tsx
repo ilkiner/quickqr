@@ -137,6 +137,7 @@ const QR_PX = 300;
 const WATERMARK_H = 28;
 const FRAME_H = 40;
 const FREE_LIMIT = 5;
+const PRO_LIMIT = 100;
 
 const FRAME_OPTIONS = [
   { value: "", label: "No Frame" },
@@ -356,8 +357,9 @@ export default function GeneratePage() {
       setCurrentUser(user ?? null);
 
       if (user) {
-        // Check limit for free plan users only
-        if (!paid) {
+        // Check monthly limit for free and pro users (business = unlimited)
+        if (profilePlan !== "business") {
+          const monthlyLimit = profilePlan === "pro" ? PRO_LIMIT : FREE_LIMIT;
           const now = new Date();
           const { count, error: countError } = await supabase
             .from("qr_codes")
@@ -371,7 +373,7 @@ export default function GeneratePage() {
             return;
           }
 
-          if ((count ?? 0) >= FREE_LIMIT) {
+          if ((count ?? 0) >= monthlyLimit) {
             setLimitReachedModal(true);
             setSubmitting(false);
             return;
@@ -1042,16 +1044,24 @@ export default function GeneratePage() {
                 <i className="ri-alert-line text-green-600 text-xl" />
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                You've reached your free limit
+                {profilePlan === "pro"
+                  ? "You've reached your Pro limit"
+                  : "You've reached your free limit"}
               </h2>
               <p className="text-gray-600">
-                Upgrade to Pro for unlimited QR codes and advanced analytics.
+                {profilePlan === "pro"
+                  ? "You've used all 100 QR codes for this month. Upgrade to Business for unlimited QR codes."
+                  : "Upgrade to Pro for 100 QR codes/month and advanced analytics."}
               </p>
             </div>
 
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <p className="text-sm text-gray-700">
-                <span className="font-semibold text-green-700">Pro Plan:</span> 100+ QR codes per month
+                {profilePlan === "pro" ? (
+                  <><span className="font-semibold text-green-700">Business Plan:</span> Unlimited QR codes per month</>
+                ) : (
+                  <><span className="font-semibold text-green-700">Pro Plan:</span> 100 QR codes per month</>
+                )}
               </p>
             </div>
 
@@ -1064,7 +1074,7 @@ export default function GeneratePage() {
                 }}
                 className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded-lg transition"
               >
-                Upgrade to Pro
+                {profilePlan === "pro" ? "Upgrade to Business" : "Upgrade to Pro"}
               </button>
               <button
                 type="button"

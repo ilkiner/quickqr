@@ -126,7 +126,9 @@ export default function DashboardPage() {
       return created.getMonth() === currentMonth && created.getFullYear() === currentYear;
     }).length;
   }, [qrRows]);
-  const freeLimitReached = plan === "free" && monthlyCreatedCount >= 5;
+  const limitReached =
+    (plan === "free" && monthlyCreatedCount >= 5) ||
+    (plan === "pro" && monthlyCreatedCount >= 100);
 
   const handleDelete = async (id: string) => {
     const supabase = createClient();
@@ -195,9 +197,11 @@ export default function DashboardPage() {
             </Link>
           </section>
 
-          {freeLimitReached && (
+          {limitReached && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-900 text-sm">
-              You&apos;ve reached your free limit. Upgrade to Pro for 100 QR codes/month.
+              {plan === "pro"
+                ? "You've used all 100 QR codes for this month. Upgrade to Business for unlimited QR codes."
+                : "You've reached your free limit. Upgrade to Pro for 100 QR codes/month."}
             </div>
           )}
 
