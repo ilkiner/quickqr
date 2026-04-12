@@ -8,6 +8,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "src/lib/supabase/client";
 
 const qrTypes = [
+  { id: "url", label: "URL / Website Link" },
   { id: "restaurant", label: "Restaurant Menu" },
   { id: "vcard", label: "vCard / Contact" },
   { id: "social", label: "Social Media" },
@@ -17,6 +18,9 @@ const qrTypes = [
 ];
 
 const QUERY_TO_ID: Record<string, string> = {
+  url: "url",
+  website: "url",
+  link: "url",
   "restaurant-menu": "restaurant",
   restaurant: "restaurant",
   vcard: "vcard",
@@ -30,6 +34,7 @@ const QUERY_TO_ID: Record<string, string> = {
 };
 
 const ID_TO_QUERY: Record<string, string> = {
+  url: "url",
   restaurant: "restaurant-menu",
   vcard: "vcard",
   social: "social-media",
@@ -56,6 +61,12 @@ function buildQrData(
   values: Record<string, string>
 ): { data: string; error?: string } {
   switch (activeType) {
+    case "url": {
+      const url = values.url?.trim() ?? "";
+      if (!url) return { data: "", error: "URL is required" };
+      if (!isValidHttpUrl(url)) return { data: "", error: "Enter a valid URL starting with http:// or https://" };
+      return { data: url };
+    }
     case "restaurant": {
       const url = values.url?.trim() ?? "";
       if (!url) return { data: "", error: "URL is required" };
@@ -223,7 +234,7 @@ async function downloadQrCanvas(
 export default function GeneratePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [activeType, setActiveType] = useState("restaurant");
+  const [activeType, setActiveType] = useState("url");
   const [formValues, setFormValues] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [qrUrl, setQrUrl] = useState("");
@@ -570,6 +581,30 @@ export default function GeneratePage() {
 
             {errors._form && (
               <p className="text-red-500 text-sm mb-4">{errors._form}</p>
+            )}
+
+            {activeType === "url" && (
+              <form noValidate onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Website URL</label>
+                  <input
+                    type="url"
+                    autoComplete="url"
+                    value={formValues.url ?? ""}
+                    onChange={(e) => setField("url", e.target.value)}
+                    placeholder="https://example.com"
+                    className={inputClass("url")}
+                  />
+                  {fieldError("url")}
+                </div>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-semibold"
+                >
+                  {submitting ? "Generating..." : "Generate QR Code"}
+                </button>
+              </form>
             )}
 
             {activeType === "restaurant" && (

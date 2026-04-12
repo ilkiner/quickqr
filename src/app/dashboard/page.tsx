@@ -47,6 +47,7 @@ export default function DashboardPage() {
   const [qrRows, setQrRows] = useState<QrCodeRow[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editUrl, setEditUrl] = useState("");
+  const [monthlyCreatedCount, setMonthlyCreatedCount] = useState(0);
 
   const loadData = useCallback(async () => {
     try {
@@ -75,6 +76,7 @@ export default function DashboardPage() {
             .from("qr_codes")
             .select("id, type, title, qr_url, scan_count, created_at, is_dynamic, redirect_url")
             .eq("user_id", user.id)
+            .is("deleted_at", null)
             .order("created_at", { ascending: false }),
         ]);
 
@@ -85,6 +87,16 @@ export default function DashboardPage() {
         setError(qrError.message);
       }
 
+      // Count all QR codes created this month (including deleted) for limit
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const { count: monthCount } = await supabase
+        .from("qr_codes")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .gte("created_at", monthStart);
+
+      setMonthlyCreatedCount(monthCount ?? 0);
       setProfile((profileData as Profile | null) ?? null);
       setQrRows((qrData as QrCodeRow[] | null) ?? []);
     } catch {
@@ -114,11 +126,14 @@ export default function DashboardPage() {
       return created.getMonth() === currentMonth && created.getFullYear() === currentYear;
     }).length;
   }, [qrRows]);
-  const freeLimitReached = plan === "free" && qrRows.length >= 5;
+  const freeLimitReached = plan === "free" && monthlyCreatedCount >= 5;
 
   const handleDelete = async (id: string) => {
     const supabase = createClient();
-    const { error: deleteError } = await supabase.from("qr_codes").delete().eq("id", id);
+    const { error: deleteError } = await supabase
+      .from("qr_codes")
+      .update({ deleted_at: new Date().toISOString() })
+      .eq("id", id);
     if (deleteError) {
       setError(deleteError.message);
       return;

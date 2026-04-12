@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 const qrTypes = [
+  { title: "URL / Website Link", desc: "Link any website or page", icon: "🔗", param: "url" },
   { title: "Restaurant Menu QR", desc: "Link a digital menu", icon: "🍽️", param: "restaurant-menu" },
   { title: "vCard / Contact QR", desc: "Share contact details", icon: "👤", param: "vcard" },
   { title: "Social Media QR", desc: "Link social profiles", icon: "📱", param: "social-media" },
