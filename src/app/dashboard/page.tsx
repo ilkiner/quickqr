@@ -247,6 +247,27 @@ export default function DashboardPage() {
           </div>
 
           {(plan === "pro" || plan === "business") && (
+            <section className="bg-gray-900 rounded-xl shadow-sm p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="space-y-1">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  <i className="ri-bar-chart-2-line text-green-500" />
+                  Analytics
+                </h2>
+                <p className="text-sm text-gray-400">
+                  QR tarama verileri — cihaz, saat ve tarayıcı dağılımı.
+                </p>
+              </div>
+              <Link
+                href="/dashboard/analytics"
+                className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium transition whitespace-nowrap"
+              >
+                <i className="ri-line-chart-line text-lg" aria-hidden />
+                Analitiği Görüntüle
+              </Link>
+            </section>
+          )}
+
+          {(plan === "pro" || plan === "business") && (
             <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-1">
                 <h2 className="text-lg font-bold text-gray-900">Custom QR Design</h2>
