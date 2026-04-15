@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "remixicon/fonts/remixicon.css";
 
+/* ── Tailwind v4: class-based dark mode ─────────────────────────── */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ── Animated gradient text ─────────────────────────────────────── */
 @keyframes gradient-shift {
   0%   { background-position: 0% 50%; }
