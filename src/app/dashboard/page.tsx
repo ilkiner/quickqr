@@ -175,15 +175,15 @@ export default function DashboardPage() {
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-gray-50 pt-24 pb-16 px-4">
+      <main className="min-h-screen bg-gray-50 dark:bg-[#0a0a0a] pt-24 pb-16 px-4 transition-colors duration-200">
         <div className="max-w-6xl mx-auto space-y-6">
           <Suspense fallback={null}>
             <SuccessBanner />
           </Suspense>
 
-          <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <section className="bg-white dark:bg-[#141414] rounded-xl border border-gray-100 dark:border-white/10 shadow-sm p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="space-y-2">
-              <h1 className="text-2xl font-bold text-gray-900">Welcome back, {displayName}!</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Welcome back, {displayName}!</h1>
               <span className="inline-flex items-center bg-green-100 text-green-700 rounded-full px-3 py-1 text-sm">
                 {plan === "free" ? "Free Plan" : plan === "pro" ? "Pro Plan" : "Business Plan"}
               </span>
@@ -197,7 +197,7 @@ export default function DashboardPage() {
           </section>
 
           {limitReached && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-yellow-900 text-sm">
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/50 rounded-lg p-4 text-yellow-900 dark:text-yellow-300 text-sm">
               {plan === "pro"
                 ? "You've used all 100 QR codes for this month. Upgrade to Business for unlimited QR codes."
                 : "You've reached your free limit. Upgrade to Pro for 100 QR codes/month."}
@@ -209,9 +209,9 @@ export default function DashboardPage() {
           <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {loading ? (
               Array.from({ length: 4 }).map((_, idx) => (
-                <div key={idx} className="bg-white rounded-lg p-4 border border-gray-100">
-                  <div className="h-4 w-20 bg-gray-200 animate-pulse rounded mb-3" />
-                  <div className="h-8 w-12 bg-gray-200 animate-pulse rounded" />
+                <div key={idx} className="bg-white dark:bg-[#141414] rounded-lg p-4 border border-gray-100 dark:border-white/10">
+                  <div className="h-4 w-20 bg-gray-200 dark:bg-white/10 animate-pulse rounded mb-3" />
+                  <div className="h-8 w-12 bg-gray-200 dark:bg-white/10 animate-pulse rounded" />
                 </div>
               ))
             ) : (
@@ -288,10 +288,10 @@ export default function DashboardPage() {
           )}
 
           {(plan === "pro" || plan === "business") && (
-            <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <section className="bg-white dark:bg-[#141414] rounded-xl border border-gray-100 dark:border-white/10 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-1">
-                <h2 className="text-lg font-bold text-gray-900">Custom QR Design</h2>
-                <p className="text-sm text-gray-500">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Custom QR Design</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   Get a professionally designed QR code tailored to your brand.
                 </p>
               </div>
@@ -307,7 +307,7 @@ export default function DashboardPage() {
                 </span>
                 <Link
                   href="/custom-design"
-                  className="inline-flex items-center gap-2 bg-gray-900 hover:bg-black text-white px-4 py-2 rounded-md font-medium transition whitespace-nowrap"
+                  className="inline-flex items-center gap-2 bg-gray-900 dark:bg-white/10 hover:bg-black dark:hover:bg-white/20 text-white px-4 py-2 rounded-md font-medium transition whitespace-nowrap"
                 >
                   <i className="ri-palette-line text-lg" aria-hidden />
                   Request Custom Design
@@ -316,17 +316,17 @@ export default function DashboardPage() {
             </section>
           )}
 
-          <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">QR History</h2>
+          <section className="bg-white dark:bg-[#141414] rounded-xl border border-gray-100 dark:border-white/10 shadow-sm p-5">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">QR History</h2>
             {loading ? (
               <div className="space-y-3">
                 {Array.from({ length: 4 }).map((_, idx) => (
-                  <div key={idx} className="h-12 bg-gray-200 animate-pulse rounded-md" />
+                  <div key={idx} className="h-12 bg-gray-200 dark:bg-white/10 animate-pulse rounded-md" />
                 ))}
               </div>
             ) : qrRows.length === 0 ? (
               <div className="text-center py-10 space-y-4">
-                <p className="text-gray-500">No QR codes yet</p>
+                <p className="text-gray-500 dark:text-gray-400">No QR codes yet</p>
                 <Link
                   href="/generate"
                   className="inline-flex items-center bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
@@ -338,7 +338,7 @@ export default function DashboardPage() {
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <thead>
-                    <tr className="text-left text-gray-500 border-b">
+                    <tr className="text-left text-gray-500 dark:text-gray-400 border-b dark:border-white/10">
                       <th className="py-3 pr-4">Type</th>
                       <th className="py-3 pr-4">Title</th>
                       <th className="py-3 pr-4">Created</th>
@@ -348,7 +348,7 @@ export default function DashboardPage() {
                   </thead>
                   <tbody>
                     {qrRows.map((row) => (
-                      <tr key={row.id} className="border-b last:border-b-0">
+                      <tr key={row.id} className="border-b dark:border-white/10 last:border-b-0 text-gray-800 dark:text-gray-300">
                         <td className="py-3 pr-4 capitalize">
                           <span className="flex items-center gap-1.5">
                             {row.type}
@@ -371,7 +371,7 @@ export default function DashboardPage() {
                                     type="url"
                                     value={editUrl}
                                     onChange={(e) => setEditUrl(e.target.value)}
-                                    className="border border-gray-300 rounded-md px-2 py-1 text-sm w-48 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                                    className="border border-gray-300 dark:border-white/10 rounded-md px-2 py-1 text-sm w-48 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white dark:bg-[#1e1e1e] dark:text-gray-200"
                                     placeholder="https://..."
                                     autoFocus
                                     onKeyDown={(e) => {
@@ -389,7 +389,7 @@ export default function DashboardPage() {
                                   <button
                                     type="button"
                                     onClick={() => { setEditingId(null); setEditUrl(""); }}
-                                    className="px-2 py-1 border border-gray-200 rounded-md text-sm hover:bg-gray-50"
+                                    className="px-2 py-1 border border-gray-200 dark:border-white/10 rounded-md text-sm hover:bg-gray-50 dark:hover:bg-white/5 dark:text-gray-300"
                                   >
                                     Cancel
                                   </button>
@@ -398,7 +398,7 @@ export default function DashboardPage() {
                                 <button
                                   type="button"
                                   onClick={() => { setEditingId(row.id); setEditUrl(row.redirect_url ?? ""); }}
-                                  className="px-3 py-1 border border-green-200 text-green-700 rounded-md hover:bg-green-50"
+                                  className="px-3 py-1 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 rounded-md hover:bg-green-50 dark:hover:bg-green-900/20"
                                 >
                                   Edit URL
                                 </button>
@@ -407,7 +407,7 @@ export default function DashboardPage() {
                             <button
                               type="button"
                               onClick={() => void handleDownload(row)}
-                              className="px-3 py-1 border border-gray-200 rounded-md hover:bg-gray-50"
+                              className="px-3 py-1 border border-gray-200 dark:border-white/10 rounded-md hover:bg-gray-50 dark:hover:bg-white/5 dark:text-gray-300"
                             >
                               Download
                             </button>
@@ -429,16 +429,16 @@ export default function DashboardPage() {
           </section>
 
           {(plan === "pro" || plan === "business") && (
-            <section className="bg-white rounded-xl border border-gray-100 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <section className="bg-white dark:bg-[#141414] rounded-xl border border-gray-100 dark:border-white/10 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-1">
-                <h2 className="text-lg font-bold text-gray-900">My vCard Profile</h2>
-                <p className="text-sm text-gray-500">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">My vCard Profile</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   Create a shareable digital business card with a scannable QR code.
                 </p>
               </div>
               <Link
                 href="/dashboard/vcard"
-                className="inline-flex items-center gap-2 bg-gray-900 hover:bg-black text-white px-4 py-2 rounded-md font-medium transition whitespace-nowrap"
+                className="inline-flex items-center gap-2 bg-gray-900 dark:bg-white/10 hover:bg-black dark:hover:bg-white/20 text-white px-4 py-2 rounded-md font-medium transition whitespace-nowrap"
               >
                 <i className="ri-id-card-line text-lg" aria-hidden />
                 Edit vCard Profile

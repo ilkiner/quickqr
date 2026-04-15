@@ -505,16 +505,16 @@ export default function GeneratePage() {
   };
 
   const inputClass = (key: string) =>
-    `mt-1 w-full border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 ${
-      errors[key] ? "border-red-500" : "border-gray-300"
+    `mt-1 w-full border rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-[#1e1e1e] dark:text-gray-200 dark:placeholder-gray-500 ${
+      errors[key] ? "border-red-500" : "border-gray-300 dark:border-white/10"
     }`;
 
   const fieldError = (key: string) =>
     errors[key] ? <p className="text-red-500 text-sm mt-1">{errors[key]}</p> : null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b px-6 py-4 flex flex-wrap justify-between items-center gap-3 sticky top-0 z-10">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0d0d0d] transition-colors duration-200">
+      <nav className="bg-white dark:bg-[#111111] border-b dark:border-white/10 px-6 py-4 flex flex-wrap justify-between items-center gap-3 sticky top-0 z-10">
         <Link
           href="/"
           className="flex items-center gap-2 text-xl font-bold text-green-600 hover:text-green-700 transition"
@@ -527,7 +527,7 @@ export default function GeneratePage() {
         <div className="flex items-center gap-3 sm:gap-4 flex-wrap justify-end">
           <Link
             href="/"
-            className="text-gray-600 hover:text-green-600 flex items-center gap-1 text-sm font-medium"
+            className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 flex items-center gap-1 text-sm font-medium"
           >
             <i className="ri-home-line text-lg" aria-hidden />
             Home
@@ -535,7 +535,7 @@ export default function GeneratePage() {
           <button
             type="button"
             onClick={() => setShowHistory(!showHistory)}
-            className="text-gray-600 hover:text-green-600 flex items-center gap-1"
+            className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 flex items-center gap-1"
           >
             <i className="ri-time-line text-lg" />
             View History
@@ -545,7 +545,7 @@ export default function GeneratePage() {
             <button
               type="button"
               onClick={() => void handleLogout()}
-              className="text-gray-600 hover:text-red-600 flex items-center gap-1"
+              className="text-gray-600 dark:text-gray-400 hover:text-red-600 flex items-center gap-1"
             >
               <i className="ri-logout-box-r-line text-lg" />
               Logout
@@ -554,7 +554,7 @@ export default function GeneratePage() {
             <button
               type="button"
               onClick={() => setAuthModal({ open: true, tab: "register" })}
-              className="text-gray-600 hover:text-green-600 flex items-center gap-1"
+              className="text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 flex items-center gap-1"
             >
               <i className="ri-user-add-line text-lg" />
               Register
@@ -573,7 +573,7 @@ export default function GeneratePage() {
               className={`w-full text-left px-4 py-3 rounded-lg transition ${
                 activeType === type.id
                   ? "bg-green-600 text-white font-semibold"
-                  : "bg-white border hover:bg-gray-50 text-gray-700"
+                  : "bg-white dark:bg-[#1a1a1a] border dark:border-white/10 hover:bg-gray-50 dark:hover:bg-[#242424] text-gray-700 dark:text-gray-300"
               }`}
             >
               {type.label}
@@ -582,8 +582,8 @@ export default function GeneratePage() {
         </div>
 
         <div className="lg:col-span-2 space-y-8">
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-bold mb-4">
+          <div className="bg-white dark:bg-[#141414] shadow dark:shadow-none border border-transparent dark:border-white/10 rounded-lg p-6">
+            <h2 className="text-lg font-bold mb-4 text-gray-900 dark:text-gray-100">
               Create {qrTypes.find((q) => q.id === activeType)?.label} QR Code
             </h2>
 
@@ -594,7 +594,7 @@ export default function GeneratePage() {
             {activeType === "url" && (
               <form noValidate onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Website URL</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Website URL</label>
                   <input
                     type="url"
                     autoComplete="url"
@@ -618,7 +618,7 @@ export default function GeneratePage() {
             {activeType === "restaurant" && (
               <form noValidate onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Menu URL</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Menu URL</label>
                   <input
                     type="url"
                     autoComplete="url"
@@ -641,12 +641,12 @@ export default function GeneratePage() {
 
             {activeType === "social" && (
               <form noValidate onSubmit={handleSubmit} className="space-y-3">
-                <p className="text-sm text-gray-500 mb-1">Fill in one or more platforms. Leave the rest empty.</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">Fill in one or more platforms. Leave the rest empty.</p>
                 {SOCIAL_PLATFORMS.map((platform) => (
                   <div key={platform.key}>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{platform.label}</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{platform.label}</label>
                     <div className="flex items-center gap-2">
-                      <span className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-md bg-gray-100 text-gray-600">
+                      <span className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-md bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400">
                         <i className={`${platform.icon} text-lg`} aria-hidden />
                       </span>
                       <input
@@ -655,7 +655,7 @@ export default function GeneratePage() {
                         value={formValues[platform.key] ?? ""}
                         onChange={(e) => setField(platform.key, e.target.value)}
                         placeholder={platform.placeholder}
-                        className={`flex-1 border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 ${errors[platform.key] ? "border-red-500" : "border-gray-300"}`}
+                        className={`flex-1 border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-[#1e1e1e] dark:text-gray-200 dark:placeholder-gray-500 ${errors[platform.key] ? "border-red-500" : "border-gray-300 dark:border-white/10"}`}
                       />
                     </div>
                   </div>
@@ -673,7 +673,7 @@ export default function GeneratePage() {
             {activeType === "location" && (
               <form noValidate onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Business Name <span className="text-gray-400 font-normal">(optional)</span></label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Business Name <span className="text-gray-400 font-normal">(optional)</span></label>
                   <input
                     type="text"
                     autoComplete="organization"
@@ -684,7 +684,7 @@ export default function GeneratePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Address</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Address</label>
                   <input
                     type="text"
                     autoComplete="street-address"
@@ -696,8 +696,8 @@ export default function GeneratePage() {
                   {fieldError("address")}
                 </div>
                 {(formValues.address ?? "").trim() && (
-                  <p className="text-xs text-gray-500 bg-gray-50 rounded-md px-3 py-2 break-all">
-                    <span className="font-medium text-gray-700">Generated link: </span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-white/5 rounded-md px-3 py-2 break-all">
+                    <span className="font-medium text-gray-700 dark:text-gray-300">Generated link: </span>
                     {`https://maps.google.com/?q=${encodeURIComponent(
                       [formValues.businessName?.trim(), formValues.address?.trim()].filter(Boolean).join(", ")
                     )}`}
@@ -719,7 +719,7 @@ export default function GeneratePage() {
             {activeType === "vcard" && (
               <form noValidate onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Full name</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Full name</label>
                   <input
                     type="text"
                     autoComplete="name"
@@ -730,7 +730,7 @@ export default function GeneratePage() {
                   {fieldError("name")}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Phone</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone</label>
                   <input
                     type="tel"
                     autoComplete="tel"
@@ -740,7 +740,7 @@ export default function GeneratePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
                   <input
                     type="email"
                     autoComplete="email"
@@ -751,7 +751,7 @@ export default function GeneratePage() {
                   {fieldError("email")}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Website</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Website</label>
                   <input
                     type="url"
                     autoComplete="url"
@@ -775,7 +775,7 @@ export default function GeneratePage() {
             {activeType === "email" && (
               <form noValidate onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">To</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">To</label>
                   <input
                     type="email"
                     autoComplete="email"
@@ -786,7 +786,7 @@ export default function GeneratePage() {
                   {fieldError("to")}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Subject</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Subject</label>
                   <input
                     type="text"
                     value={formValues.subject ?? ""}
@@ -795,7 +795,7 @@ export default function GeneratePage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Body</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Body</label>
                   <textarea
                     rows={4}
                     value={formValues.body ?? ""}
@@ -816,7 +816,7 @@ export default function GeneratePage() {
             {activeType === "wifi" && (
               <form noValidate onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Network name (SSID)</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Network name (SSID)</label>
                   <input
                     type="text"
                     autoComplete="off"
@@ -827,11 +827,11 @@ export default function GeneratePage() {
                   {fieldError("ssid")}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Security Type</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Security Type</label>
                   <select
                     value={formValues.security ?? "WPA"}
                     onChange={(e) => setField("security", e.target.value)}
-                    className="mt-1 w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="mt-1 w-full border border-gray-300 dark:border-white/10 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-[#1e1e1e] dark:text-gray-200"
                   >
                     <option value="WPA">WPA / WPA2</option>
                     <option value="WPA3">WPA3</option>
@@ -841,7 +841,7 @@ export default function GeneratePage() {
                 </div>
                 {(formValues.security ?? "WPA") !== "nopass" && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Password</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
                     <div className="relative mt-1">
                       <input
                         type={showPassword ? "text" : "password"}
@@ -876,11 +876,11 @@ export default function GeneratePage() {
           </div>
 
           {planLoaded && (profilePlan === "pro" || profilePlan === "business") && (
-            <div className="bg-white shadow rounded-lg p-6">
+            <div className="bg-white dark:bg-[#141414] shadow dark:shadow-none border border-transparent dark:border-white/10 rounded-lg p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-bold">Dynamic QR</h2>
-                  <p className="text-sm text-gray-500 mt-1">
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Dynamic QR</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                     Change the destination URL anytime without reprinting the QR code.
                   </p>
                 </div>
@@ -890,7 +890,7 @@ export default function GeneratePage() {
                   aria-checked={isDynamic}
                   onClick={() => setIsDynamic((v) => !v)}
                   className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                    isDynamic ? "bg-green-600" : "bg-gray-200"
+                    isDynamic ? "bg-green-600" : "bg-gray-200 dark:bg-white/20"
                   }`}
                 >
                   <span
@@ -909,11 +909,11 @@ export default function GeneratePage() {
             </div>
           )}
 
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-bold mb-4">Customize Colors</h2>
+          <div className="bg-white dark:bg-[#141414] shadow dark:shadow-none border border-transparent dark:border-white/10 rounded-lg p-6">
+            <h2 className="text-lg font-bold mb-4 text-gray-900 dark:text-gray-100">Customize Colors</h2>
             <div className="flex flex-wrap gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">QR Color</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">QR Color</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
@@ -921,11 +921,11 @@ export default function GeneratePage() {
                     onChange={(e) => setQrColor(e.target.value)}
                     className="w-10 h-10 rounded cursor-pointer border border-gray-300"
                   />
-                  <span className="text-sm text-gray-500 font-mono">{qrColor}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 font-mono">{qrColor}</span>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Background Color</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Background Color</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
@@ -933,7 +933,7 @@ export default function GeneratePage() {
                     onChange={(e) => setBgColor(e.target.value)}
                     className="w-10 h-10 rounded cursor-pointer border border-gray-300"
                   />
-                  <span className="text-sm text-gray-500 font-mono">{bgColor}</span>
+                  <span className="text-sm text-gray-500 dark:text-gray-400 font-mono">{bgColor}</span>
                 </div>
               </div>
             </div>
@@ -941,7 +941,7 @@ export default function GeneratePage() {
 
           {qrUrl && (
             <div className="bg-white shadow rounded-lg p-6 text-center space-y-4">
-              <h2 className="text-lg font-bold mb-4">Your QR Code</h2>
+              <h2 className="text-lg font-bold mb-4 text-gray-900 dark:text-gray-100">Your QR Code</h2>
               <div className="flex flex-wrap gap-2 justify-center mb-2">
                 {FRAME_OPTIONS.map((opt) => (
                   <button
@@ -951,7 +951,7 @@ export default function GeneratePage() {
                     className={`px-3 py-1.5 text-sm rounded-full border transition ${
                       frameLabel === opt.value
                         ? "bg-green-600 text-white border-green-600"
-                        : "bg-white text-gray-600 border-gray-300 hover:border-green-400"
+                        : "bg-white dark:bg-[#1a1a1a] text-gray-600 dark:text-gray-300 border-gray-300 dark:border-white/10 hover:border-green-400"
                     }`}
                   >
                     {opt.label || "No Frame"}
@@ -961,7 +961,7 @@ export default function GeneratePage() {
               <div className="inline-flex flex-col items-center border-2 border-green-500 rounded-2xl p-4">
                 <div className="relative w-[300px] h-[300px]">
                   {!imgLoaded && !imgError && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg animate-pulse text-gray-500 text-sm">
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-100 dark:bg-white/5 rounded-lg animate-pulse text-gray-500 dark:text-gray-400 text-sm">
                       Loading preview…
                     </div>
                   )}
@@ -1008,13 +1008,13 @@ export default function GeneratePage() {
                     setQrUrl("");
                     resetForm();
                   }}
-                  className="px-4 py-2 border rounded-md"
+                  className="px-4 py-2 border dark:border-white/10 rounded-md text-gray-700 dark:text-gray-300 dark:bg-[#1a1a1a] hover:bg-gray-50 dark:hover:bg-[#242424]"
                 >
                   Create Another
                 </button>
               </div>
               {!currentUser && savePromptVisible && (
-                <div className="text-sm text-gray-600 bg-gray-50 border border-gray-200 rounded-lg p-3 flex flex-wrap items-center justify-center gap-3">
+                <div className="text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg p-3 flex flex-wrap items-center justify-center gap-3">
                   <span>Sign up to save your QR codes and view scan analytics</span>
                   <button
                     type="button"
@@ -1029,9 +1029,9 @@ export default function GeneratePage() {
           )}
 
           {showHistory && (
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-bold mb-4">QR Code History</h2>
-              <p className="text-gray-500">No history data yet.</p>
+            <div className="bg-white dark:bg-[#141414] shadow dark:shadow-none border border-transparent dark:border-white/10 rounded-lg p-6">
+              <h2 className="text-lg font-bold mb-4 text-gray-900 dark:text-gray-100">QR Code History</h2>
+              <p className="text-gray-500 dark:text-gray-400">No history data yet.</p>
             </div>
           )}
         </div>
@@ -1044,17 +1044,17 @@ export default function GeneratePage() {
 
       {limitReachedModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6 space-y-6">
+          <div className="bg-white dark:bg-[#141414] border border-transparent dark:border-white/10 rounded-lg shadow-lg max-w-md w-full p-6 space-y-6">
             <div className="text-center">
               <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 rounded-full mb-4">
                 <i className="ri-alert-line text-green-600 text-xl" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                 {profilePlan === "pro"
                   ? "You've reached your Pro limit"
                   : "You've reached your free limit"}
               </h2>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 {profilePlan === "pro"
                   ? "You've used all 100 QR codes for this month. Upgrade to Business for unlimited QR codes."
                   : "Upgrade to Pro for 100 QR codes/month and advanced analytics."}
@@ -1085,7 +1085,7 @@ export default function GeneratePage() {
               <button
                 type="button"
                 onClick={() => setLimitReachedModal(false)}
-                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2 rounded-lg transition"
+                className="w-full bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/15 text-gray-700 dark:text-gray-300 font-semibold py-2 rounded-lg transition"
               >
                 Maybe later
               </button>

@@ -43,56 +43,56 @@ export default function ContactPage() {
   };
 
   const inputClass = (key: string) =>
-    `w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 ${
-      errors[key] ? "border-red-500" : "border-gray-300"
+    `w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 bg-white dark:bg-[#1e1e1e] dark:text-gray-200 dark:placeholder-gray-500 transition-colors ${
+      errors[key] ? "border-red-500" : "border-gray-300 dark:border-white/10"
     }`;
 
   return (
-    <section className="min-h-screen bg-white py-16 px-4 md:px-10">
+    <section className="min-h-screen bg-white dark:bg-[#0a0a0a] py-16 px-4 md:px-10 transition-colors duration-200">
       <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-start">
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-8">Get in Touch</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-8">Get in Touch</h1>
           <div className="space-y-6">
             <div className="flex gap-4 items-start">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
-                <i className="ri-mail-line text-xl text-green-600" aria-hidden />
+              <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center shrink-0">
+                <i className="ri-mail-line text-xl text-green-600 dark:text-green-400" aria-hidden />
               </div>
               <div>
-                <p className="font-semibold text-gray-900">Email</p>
-                <p className="text-gray-600 text-sm">support@quickqr.com</p>
+                <p className="font-semibold text-gray-900 dark:text-gray-100">Email</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">support@quickqr.com</p>
               </div>
             </div>
             <div className="flex gap-4 items-start">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
-                <i className="ri-phone-line text-xl text-green-600" aria-hidden />
+              <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center shrink-0">
+                <i className="ri-phone-line text-xl text-green-600 dark:text-green-400" aria-hidden />
               </div>
               <div>
-                <p className="font-semibold text-gray-900">Phone</p>
-                <p className="text-gray-600 text-sm">+48 123 456 789</p>
+                <p className="font-semibold text-gray-900 dark:text-gray-100">Phone</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">+48 123 456 789</p>
               </div>
             </div>
             <div className="flex gap-4 items-start">
-              <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center shrink-0">
-                <i className="ri-time-line text-xl text-green-600" aria-hidden />
+              <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center shrink-0">
+                <i className="ri-time-line text-xl text-green-600 dark:text-green-400" aria-hidden />
               </div>
               <div>
-                <p className="font-semibold text-gray-900">Response Time</p>
-                <p className="text-gray-600 text-sm">Usually within 24 hours</p>
+                <p className="font-semibold text-gray-900 dark:text-gray-100">Response Time</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">Usually within 24 hours</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-gray-50 rounded-2xl p-8 shadow-sm">
+        <div className="bg-gray-50 dark:bg-[#141414] border border-transparent dark:border-white/10 rounded-2xl p-8 shadow-sm">
           {success ? (
             <div className="text-center py-8">
               <div className="flex justify-center mb-6">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                  <i className="ri-check-line text-3xl text-green-600" aria-hidden />
+                <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                  <i className="ri-check-line text-3xl text-green-600 dark:text-green-400" aria-hidden />
                 </div>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Message Sent!</h2>
-              <p className="text-gray-600 mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Message Sent!</h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
                 Thanks {name.trim()}, we&apos;ll get back to you soon.
               </p>
               <button
@@ -106,7 +106,7 @@ export default function ContactPage() {
           ) : (
             <form noValidate onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label htmlFor="contact-name" className="block font-medium text-gray-700 mb-1">
+                <label htmlFor="contact-name" className="block font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Name
                 </label>
                 <input
@@ -122,7 +122,7 @@ export default function ContactPage() {
                 {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
               </div>
               <div>
-                <label htmlFor="contact-email" className="block font-medium text-gray-700 mb-1">
+                <label htmlFor="contact-email" className="block font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Email
                 </label>
                 <input
@@ -138,7 +138,7 @@ export default function ContactPage() {
                 {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
               </div>
               <div>
-                <label htmlFor="contact-message" className="block font-medium text-gray-700 mb-1">
+                <label htmlFor="contact-message" className="block font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Message
                 </label>
                 <textarea
