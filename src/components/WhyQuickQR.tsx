@@ -1,62 +1,38 @@
-import React from "react";
+"use client";
 
-const featureList = [
-  {
-    title: "Fast",
-    description: "Generate QR codes in seconds with our user-friendly interface.",
-    icon: "ri-check-line",
-  },
-  {
-    title: "Secure",
-    description: "Your data is encrypted and protected.",
-    icon: "ri-check-line",
-  },
-  {
-    title: "Easy to Use",
-    description: "Simple interface, powerful features.",
-    icon: "ri-check-line",
-  },
-  {
-    title: "Mobile Friendly",
-    description: "Works perfectly on all devices.",
-    icon: "ri-check-line",
-  },
-];
+import { useLanguage } from "src/contexts/LanguageContext";
 
-const WhyQuickQR = () => {
+export default function WhyQuickQR() {
+  const { t } = useLanguage();
+
   return (
-    <section className="w-full bg-white py-16 px-6 sm:px-10">
+    <section className="w-full bg-white dark:bg-[#0a0a0a] py-16 px-6 sm:px-10 transition-colors duration-200">
       <div className="max-w-6xl mx-auto text-center">
-        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-          Why QuickQR?
+        <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 dark:text-gray-100 mb-4">
+          {t.why.title}
         </h2>
-        <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
-          Discover the benefits of using QuickQR for your QR code needs.
+        <p className="text-base sm:text-lg md:text-xl text-gray-600 dark:text-gray-400 mb-12 max-w-2xl mx-auto">
+          {t.why.sub}
         </p>
       </div>
 
-      {/* Özellik Kartları */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 max-w-6xl mx-auto">
-        {featureList.map((feature, index) => (
+        {t.why.features.map((feature, index) => (
           <div
             key={index}
-            className="bg-gray-100 p-6 sm:p-8 rounded-2xl shadow-sm hover:shadow-md transition text-center sm:text-left"
+            className="bg-gray-100 dark:bg-[#141414] border border-transparent dark:border-white/10 p-6 sm:p-8 rounded-2xl shadow-sm hover:shadow-md hover:shadow-green-500/20 hover:scale-[1.02] transition-all duration-300 text-center sm:text-left"
+            style={{ transitionTimingFunction: "cubic-bezier(0.4,0,0.2,1)" }}
           >
-            <i
-              className={`${feature.icon} text-green-600 text-4xl mb-4 block`}
-              aria-hidden="true"
-            ></i>
-            <h3 className="text-lg font-semibold text-gray-800 mb-1">
+            <i className="ri-check-line text-green-600 text-4xl mb-4 block" aria-hidden="true" />
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-1">
               {feature.title}
             </h3>
-            <p className="text-gray-600 text-sm sm:text-base">
-              {feature.description}
+            <p className="text-gray-600 dark:text-gray-400 text-sm sm:text-base">
+              {feature.desc}
             </p>
           </div>
         ))}
       </div>
     </section>
   );
-};
-
-export default WhyQuickQR;
+}

@@ -7,14 +7,8 @@ import { useTheme } from "next-themes";
 import AuthModal from "./AuthModal";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "src/lib/supabase/client";
-
-const nav = [
-  { href: "/", label: "Generate" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/about", label: "About" },
-  { href: "/blog", label: "Blog" },
-  { href: "/contact", label: "Contact" },
-];
+import { useLanguage } from "src/contexts/LanguageContext";
+import type { Lang } from "src/lib/i18n";
 
 function linkClass(active: boolean) {
   return active
@@ -32,7 +26,7 @@ function ThemeToggle() {
       type="button"
       aria-label="Toggle dark mode"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-      className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 transition-all duration-200 cubic-bezier(0.4,0,0.2,1)"
+      className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 transition-all duration-200"
     >
       {theme === "dark" ? (
         <i className="ri-sun-line text-lg text-yellow-400" />
@@ -43,8 +37,36 @@ function ThemeToggle() {
   );
 }
 
+function LangSelector() {
+  const { lang, setLang } = useLanguage();
+  const langs: Lang[] = ["en", "tr", "pl"];
+  return (
+    <div className="flex items-center gap-1 text-xs font-semibold">
+      {langs.map((l, i) => (
+        <span key={l} className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setLang(l)}
+            className={`uppercase transition-all duration-200 ${
+              lang === l
+                ? "text-green-600"
+                : "text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+            }`}
+          >
+            {l}
+          </button>
+          {i < langs.length - 1 && (
+            <span className="text-gray-300 dark:text-gray-600">|</span>
+          )}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export default function Header() {
   const pathname = usePathname();
+  const { t } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -52,6 +74,14 @@ export default function Header() {
     open: boolean;
     tab: "login" | "register";
   }>({ open: false, tab: "login" });
+
+  const nav = [
+    { href: "/", label: t.nav.generate },
+    { href: "/pricing", label: t.nav.pricing },
+    { href: "/about", label: t.nav.about },
+    { href: "/blog", label: t.nav.blog },
+    { href: "/contact", label: t.nav.contact },
+  ];
 
   useEffect(() => {
     const supabase = createClient();
@@ -108,6 +138,7 @@ export default function Header() {
         </nav>
 
         <div className="hidden md:flex justify-end items-center gap-3 text-sm">
+          <LangSelector />
           <ThemeToggle />
           {authLoading ? (
             <div className="w-20 h-8 bg-gray-100 dark:bg-white/10 animate-pulse rounded-md" />
@@ -117,14 +148,14 @@ export default function Header() {
                 {avatarLetter}
               </div>
               <Link href="/dashboard" className="hover:text-green-600 dark:text-gray-300 dark:hover:text-green-400 transition-all duration-200 font-medium">
-                Dashboard
+                {t.nav.dashboard}
               </Link>
               <button
                 type="button"
                 onClick={handleLogout}
                 className="text-gray-700 dark:text-gray-400 hover:text-red-600 transition-all duration-200"
               >
-                Logout
+                {t.nav.logout}
               </button>
             </>
           ) : (
@@ -134,14 +165,14 @@ export default function Header() {
                 onClick={() => setAuthModal({ open: true, tab: "login" })}
                 className="hover:text-green-600 dark:text-gray-300 dark:hover:text-green-400 transition-all duration-200"
               >
-                Login
+                {t.nav.login}
               </button>
               <button
                 type="button"
                 onClick={() => setAuthModal({ open: true, tab: "register" })}
                 className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-all duration-200"
               >
-                Register
+                {t.nav.register}
               </button>
             </>
           )}
@@ -187,7 +218,7 @@ export default function Header() {
                   onClick={() => setMenuOpen(false)}
                   className="text-center hover:text-green-600 dark:hover:text-green-400"
                 >
-                  Dashboard
+                  {t.nav.dashboard}
                 </Link>
                 <button
                   type="button"
@@ -197,7 +228,7 @@ export default function Header() {
                   }}
                   className="hover:text-red-600 transition-all duration-200"
                 >
-                  Logout
+                  {t.nav.logout}
                 </button>
               </>
             ) : (
@@ -210,7 +241,7 @@ export default function Header() {
                   }}
                   className="hover:text-green-600 dark:hover:text-green-400"
                 >
-                  Login
+                  {t.nav.login}
                 </button>
                 <button
                   type="button"
@@ -220,11 +251,12 @@ export default function Header() {
                   }}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-all duration-200"
                 >
-                  Register
+                  {t.nav.register}
                 </button>
               </>
             )}
-            <div className="flex justify-center pt-1">
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <LangSelector />
               <ThemeToggle />
             </div>
           </div>
