@@ -7,6 +7,7 @@ import { Suspense } from "react";
 import Header from "src/components/Header";
 import Footer from "src/components/Footer";
 import { createClient } from "src/lib/supabase/client";
+import { useLanguage } from "src/contexts/LanguageContext";
 
 type Profile = {
   full_name: string | null;
@@ -31,16 +32,20 @@ const planLimitMap: Record<string, string> = {
 };
 
 function SuccessBanner() {
+  const { t } = useLanguage();
   const searchParams = useSearchParams();
   if (searchParams.get("success") !== "true") return null;
   return (
     <div className="rounded-lg bg-green-50 border border-green-200 p-4 text-sm text-green-800">
-      Payment successful! Your plan has been upgraded. It may take a few seconds to reflect below.
+      {t.dashboard.successBanner}
     </div>
   );
 }
 
 export default function DashboardPage() {
+  const { t } = useLanguage();
+  const d = t.dashboard;
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -55,52 +60,28 @@ export default function DashboardPage() {
       setLoading(true);
       setError("");
       const supabase = createClient();
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
 
       if (userError || !user) {
-        setError("Please sign in to view your dashboard.");
+        setError(d.signInRequired);
         setLoading(false);
         return;
       }
 
       const [{ data: profileData, error: profileError }, { data: qrData, error: qrError }] =
         await Promise.all([
-          supabase
-            .from("profiles")
-            .select("full_name, plan")
-            .eq("id", user.id)
-            .maybeSingle(),
-          supabase
-            .from("qr_codes")
-            .select("id, type, title, qr_url, scan_count, created_at, is_dynamic, redirect_url")
-            .eq("user_id", user.id)
-            .is("deleted_at", null)
-            .order("created_at", { ascending: false }),
+          supabase.from("profiles").select("full_name, plan").eq("id", user.id).maybeSingle(),
+          supabase.from("qr_codes").select("id, type, title, qr_url, scan_count, created_at, is_dynamic, redirect_url").eq("user_id", user.id).is("deleted_at", null).order("created_at", { ascending: false }),
         ]);
 
-      if (profileError) {
-        setError(profileError.message);
-      }
-      if (qrError) {
-        setError(qrError.message);
-      }
+      if (profileError) setError(profileError.message);
+      if (qrError) setError(qrError.message);
 
-      // Count all QR codes (including deleted) for stats and limit
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
       const [{ count: monthCount }, { count: totalCount }] = await Promise.all([
-        supabase
-          .from("qr_codes")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id)
-          .gte("created_at", monthStart),
-        supabase
-          .from("qr_codes")
-          .select("*", { count: "exact", head: true })
-          .eq("user_id", user.id),
+        supabase.from("qr_codes").select("*", { count: "exact", head: true }).eq("user_id", user.id).gte("created_at", monthStart),
+        supabase.from("qr_codes").select("*", { count: "exact", head: true }).eq("user_id", user.id),
       ]);
 
       setMonthlyCreatedCount(monthCount ?? 0);
@@ -108,11 +89,11 @@ export default function DashboardPage() {
       setProfile((profileData as Profile | null) ?? null);
       setQrRows((qrData as QrCodeRow[] | null) ?? []);
     } catch {
-      setError("Could not load dashboard data. Please try again.");
+      setError(d.loadError);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [d]);
 
   useEffect(() => {
     void loadData();
@@ -121,24 +102,13 @@ export default function DashboardPage() {
   const displayName = profile?.full_name?.trim() || "there";
   const plan = profile?.plan ?? "free";
   const planLimit = planLimitMap[plan] ?? "5";
-  const totalScans = useMemo(
-    () => qrRows.reduce((sum, row) => sum + (row.scan_count ?? 0), 0),
-    [qrRows]
-  );
-  const limitReached =
-    (plan === "free" && monthlyCreatedCount >= 5) ||
-    (plan === "pro" && monthlyCreatedCount >= 100);
+  const totalScans = useMemo(() => qrRows.reduce((sum, row) => sum + (row.scan_count ?? 0), 0), [qrRows]);
+  const limitReached = (plan === "free" && monthlyCreatedCount >= 5) || (plan === "pro" && monthlyCreatedCount >= 100);
 
   const handleDelete = async (id: string) => {
     const supabase = createClient();
-    const { error: deleteError } = await supabase
-      .from("qr_codes")
-      .update({ deleted_at: new Date().toISOString() })
-      .eq("id", id);
-    if (deleteError) {
-      setError(deleteError.message);
-      return;
-    }
+    const { error: deleteError } = await supabase.from("qr_codes").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+    if (deleteError) { setError(deleteError.message); return; }
     setQrRows((prev) => prev.filter((row) => row.id !== id));
   };
 
@@ -157,20 +127,14 @@ export default function DashboardPage() {
   const handleSaveUrl = async (id: string) => {
     if (!editUrl.trim()) return;
     const supabase = createClient();
-    const { error: updateError } = await supabase
-      .from("qr_codes")
-      .update({ redirect_url: editUrl.trim() })
-      .eq("id", id);
-    if (updateError) {
-      setError(updateError.message);
-      return;
-    }
-    setQrRows((prev) =>
-      prev.map((row) => (row.id === id ? { ...row, redirect_url: editUrl.trim() } : row))
-    );
+    const { error: updateError } = await supabase.from("qr_codes").update({ redirect_url: editUrl.trim() }).eq("id", id);
+    if (updateError) { setError(updateError.message); return; }
+    setQrRows((prev) => prev.map((row) => (row.id === id ? { ...row, redirect_url: editUrl.trim() } : row)));
     setEditingId(null);
     setEditUrl("");
   };
+
+  const planLabel = plan === "free" ? d.freePlan : plan === "pro" ? d.proPlan : d.businessPlan;
 
   return (
     <>
@@ -183,24 +147,21 @@ export default function DashboardPage() {
 
           <section className="bg-white dark:bg-[#141414] rounded-xl border border-gray-100 dark:border-white/10 shadow-sm p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="space-y-2">
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Welcome back, {displayName}!</h1>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                {d.welcomeBack.replace("{name}", displayName)}
+              </h1>
               <span className="inline-flex items-center bg-green-100 text-green-700 rounded-full px-3 py-1 text-sm">
-                {plan === "free" ? "Free Plan" : plan === "pro" ? "Pro Plan" : "Business Plan"}
+                {planLabel}
               </span>
             </div>
-            <Link
-              href="/pricing"
-              className="inline-flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium transition"
-            >
-              Upgrade to Pro
+            <Link href="/pricing" className="inline-flex items-center justify-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium transition">
+              {d.upgradeToPro}
             </Link>
           </section>
 
           {limitReached && (
             <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800/50 rounded-lg p-4 text-yellow-900 dark:text-yellow-300 text-sm">
-              {plan === "pro"
-                ? "You've used all 100 QR codes for this month. Upgrade to Business for unlimited QR codes."
-                : "You've reached your free limit. Upgrade to Pro for 100 QR codes/month."}
+              {plan === "pro" ? d.limitProMsg : d.limitFreeMsg}
             </div>
           )}
 
@@ -218,7 +179,7 @@ export default function DashboardPage() {
               <>
                 <div className="bg-gradient-to-br from-[#141414] to-[#1a1a1a] rounded-xl p-4 border border-white/10">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">QR Codes Created</p>
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{d.stats.qrCreated}</p>
                     <div className="w-7 h-7 bg-green-600/20 rounded-lg flex items-center justify-center">
                       <i className="ri-qr-code-line text-green-500 text-sm" />
                     </div>
@@ -227,7 +188,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="bg-gradient-to-br from-[#141414] to-[#1a1a1a] rounded-xl p-4 border border-white/10">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Total Scans</p>
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{d.stats.totalScans}</p>
                     <div className="w-7 h-7 bg-green-600/20 rounded-lg flex items-center justify-center">
                       <i className="ri-bar-chart-2-line text-green-500 text-sm" />
                     </div>
@@ -236,7 +197,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="bg-gradient-to-br from-[#141414] to-[#1a1a1a] rounded-xl p-4 border border-white/10">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">This Month</p>
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{d.stats.thisMonth}</p>
                     <div className="w-7 h-7 bg-green-600/20 rounded-lg flex items-center justify-center">
                       <i className="ri-calendar-line text-green-500 text-sm" />
                     </div>
@@ -245,7 +206,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="bg-gradient-to-br from-[#141414] to-[#1a1a1a] rounded-xl p-4 border border-white/10">
                   <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">Plan Limit</p>
+                    <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">{d.stats.planLimit}</p>
                     <div className="w-7 h-7 bg-green-600/20 rounded-lg flex items-center justify-center">
                       <i className="ri-shield-check-line text-green-500 text-sm" />
                     </div>
@@ -257,12 +218,9 @@ export default function DashboardPage() {
           </section>
 
           <div>
-            <Link
-              href="/generate"
-              className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
-            >
+            <Link href="/generate" className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
               <i className="ri-add-line text-lg" aria-hidden />
-              Create New QR
+              {d.createNew}
             </Link>
           </div>
 
@@ -271,18 +229,13 @@ export default function DashboardPage() {
               <div className="space-y-1">
                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                   <i className="ri-bar-chart-2-line text-green-500" />
-                  Analytics
+                  {d.analytics.title}
                 </h2>
-                <p className="text-sm text-gray-400">
-                  QR tarama verileri — cihaz, saat ve tarayıcı dağılımı.
-                </p>
+                <p className="text-sm text-gray-400">{d.analytics.desc}</p>
               </div>
-              <Link
-                href="/dashboard/analytics"
-                className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium transition whitespace-nowrap"
-              >
+              <Link href="/dashboard/analytics" className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-medium transition whitespace-nowrap">
                 <i className="ri-line-chart-line text-lg" aria-hidden />
-                Analitiği Görüntüle
+                {d.analytics.btn}
               </Link>
             </section>
           )}
@@ -290,34 +243,23 @@ export default function DashboardPage() {
           {(plan === "pro" || plan === "business") && (
             <section className="bg-white dark:bg-[#141414] rounded-xl border border-gray-100 dark:border-white/10 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-1">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Custom QR Design</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Get a professionally designed QR code tailored to your brand.
-                </p>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{d.customDesign.title}</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{d.customDesign.desc}</p>
               </div>
               <div className="flex items-center gap-3">
-                <span
-                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                    plan === "business"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-green-50 text-green-600"
-                  }`}
-                >
-                  {plan === "business" ? "30% off for Business members" : "20% off for Pro members"}
+                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${plan === "business" ? "bg-green-100 text-green-700" : "bg-green-50 text-green-600"}`}>
+                  {plan === "business" ? d.customDesign.businessDiscount : d.customDesign.proDiscount}
                 </span>
-                <Link
-                  href="/custom-design"
-                  className="inline-flex items-center gap-2 bg-gray-900 dark:bg-white/10 hover:bg-black dark:hover:bg-white/20 text-white px-4 py-2 rounded-md font-medium transition whitespace-nowrap"
-                >
+                <Link href="/custom-design" className="inline-flex items-center gap-2 bg-gray-900 dark:bg-white/10 hover:bg-black dark:hover:bg-white/20 text-white px-4 py-2 rounded-md font-medium transition whitespace-nowrap">
                   <i className="ri-palette-line text-lg" aria-hidden />
-                  Request Custom Design
+                  {d.customDesign.btn}
                 </Link>
               </div>
             </section>
           )}
 
           <section className="bg-white dark:bg-[#141414] rounded-xl border border-gray-100 dark:border-white/10 shadow-sm p-5">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">QR History</h2>
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 mb-4">{d.history.title}</h2>
             {loading ? (
               <div className="space-y-3">
                 {Array.from({ length: 4 }).map((_, idx) => (
@@ -326,12 +268,9 @@ export default function DashboardPage() {
               </div>
             ) : qrRows.length === 0 ? (
               <div className="text-center py-10 space-y-4">
-                <p className="text-gray-500 dark:text-gray-400">No QR codes yet</p>
-                <Link
-                  href="/generate"
-                  className="inline-flex items-center bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
-                >
-                  Create your first QR
+                <p className="text-gray-500 dark:text-gray-400">{d.history.noQr}</p>
+                <Link href="/generate" className="inline-flex items-center bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+                  {d.history.createFirst}
                 </Link>
               </div>
             ) : (
@@ -339,11 +278,11 @@ export default function DashboardPage() {
                 <table className="min-w-full text-sm">
                   <thead>
                     <tr className="text-left text-gray-500 dark:text-gray-400 border-b dark:border-white/10">
-                      <th className="py-3 pr-4">Type</th>
-                      <th className="py-3 pr-4">Title</th>
-                      <th className="py-3 pr-4">Created</th>
-                      <th className="py-3 pr-4">Scans</th>
-                      <th className="py-3">Actions</th>
+                      <th className="py-3 pr-4">{d.history.type}</th>
+                      <th className="py-3 pr-4">{d.history.titleCol}</th>
+                      <th className="py-3 pr-4">{d.history.created}</th>
+                      <th className="py-3 pr-4">{d.history.scans}</th>
+                      <th className="py-3">{d.history.actions}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -354,7 +293,7 @@ export default function DashboardPage() {
                             {row.type}
                             {row.is_dynamic && (
                               <span className="inline-flex items-center bg-green-50 text-green-700 text-xs font-medium px-1.5 py-0.5 rounded">
-                                Dynamic
+                                {d.history.dynamic}
                               </span>
                             )}
                           </span>
@@ -368,55 +307,32 @@ export default function DashboardPage() {
                               editingId === row.id ? (
                                 <div className="flex items-center gap-1">
                                   <input
-                                    type="url"
-                                    value={editUrl}
-                                    onChange={(e) => setEditUrl(e.target.value)}
+                                    type="url" value={editUrl} onChange={(e) => setEditUrl(e.target.value)}
                                     className="border border-gray-300 dark:border-white/10 rounded-md px-2 py-1 text-sm w-48 focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none bg-white dark:bg-[#1e1e1e] dark:text-gray-200"
-                                    placeholder="https://..."
-                                    autoFocus
+                                    placeholder="https://..." autoFocus
                                     onKeyDown={(e) => {
                                       if (e.key === "Enter") void handleSaveUrl(row.id);
                                       if (e.key === "Escape") { setEditingId(null); setEditUrl(""); }
                                     }}
                                   />
-                                  <button
-                                    type="button"
-                                    onClick={() => void handleSaveUrl(row.id)}
-                                    className="px-2 py-1 bg-green-600 text-white rounded-md text-sm hover:bg-green-700"
-                                  >
-                                    Save
+                                  <button type="button" onClick={() => void handleSaveUrl(row.id)} className="px-2 py-1 bg-green-600 text-white rounded-md text-sm hover:bg-green-700">
+                                    {d.history.save}
                                   </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => { setEditingId(null); setEditUrl(""); }}
-                                    className="px-2 py-1 border border-gray-200 dark:border-white/10 rounded-md text-sm hover:bg-gray-50 dark:hover:bg-white/5 dark:text-gray-300"
-                                  >
-                                    Cancel
+                                  <button type="button" onClick={() => { setEditingId(null); setEditUrl(""); }} className="px-2 py-1 border border-gray-200 dark:border-white/10 rounded-md text-sm hover:bg-gray-50 dark:hover:bg-white/5 dark:text-gray-300">
+                                    {d.history.cancel}
                                   </button>
                                 </div>
                               ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => { setEditingId(row.id); setEditUrl(row.redirect_url ?? ""); }}
-                                  className="px-3 py-1 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 rounded-md hover:bg-green-50 dark:hover:bg-green-900/20"
-                                >
-                                  Edit URL
+                                <button type="button" onClick={() => { setEditingId(row.id); setEditUrl(row.redirect_url ?? ""); }} className="px-3 py-1 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 rounded-md hover:bg-green-50 dark:hover:bg-green-900/20">
+                                  {d.history.editUrl}
                                 </button>
                               )
                             )}
-                            <button
-                              type="button"
-                              onClick={() => void handleDownload(row)}
-                              className="px-3 py-1 border border-gray-200 dark:border-white/10 rounded-md hover:bg-gray-50 dark:hover:bg-white/5 dark:text-gray-300"
-                            >
-                              Download
+                            <button type="button" onClick={() => void handleDownload(row)} className="px-3 py-1 border border-gray-200 dark:border-white/10 rounded-md hover:bg-gray-50 dark:hover:bg-white/5 dark:text-gray-300">
+                              {d.history.download}
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => void handleDelete(row.id)}
-                              className="px-3 py-1 text-red-600 border border-red-100 rounded-md hover:bg-red-50"
-                            >
-                              Delete
+                            <button type="button" onClick={() => void handleDelete(row.id)} className="px-3 py-1 text-red-600 border border-red-100 rounded-md hover:bg-red-50">
+                              {d.history.delete}
                             </button>
                           </div>
                         </td>
@@ -431,17 +347,12 @@ export default function DashboardPage() {
           {(plan === "pro" || plan === "business") && (
             <section className="bg-white dark:bg-[#141414] rounded-xl border border-gray-100 dark:border-white/10 shadow-sm p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-1">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">My vCard Profile</h2>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Create a shareable digital business card with a scannable QR code.
-                </p>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{d.vcard.title}</h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{d.vcard.desc}</p>
               </div>
-              <Link
-                href="/dashboard/vcard"
-                className="inline-flex items-center gap-2 bg-gray-900 dark:bg-white/10 hover:bg-black dark:hover:bg-white/20 text-white px-4 py-2 rounded-md font-medium transition whitespace-nowrap"
-              >
+              <Link href="/dashboard/vcard" className="inline-flex items-center gap-2 bg-gray-900 dark:bg-white/10 hover:bg-black dark:hover:bg-white/20 text-white px-4 py-2 rounded-md font-medium transition whitespace-nowrap">
                 <i className="ri-id-card-line text-lg" aria-hidden />
-                Edit vCard Profile
+                {d.vcard.btn}
               </Link>
             </section>
           )}

@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useLanguage } from "src/contexts/LanguageContext";
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ContactPage() {
+  const { t } = useLanguage();
+  const c = t.contact;
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
@@ -22,11 +26,11 @@ export default function ContactPage() {
 
   const validate = () => {
     const next: Record<string, string> = {};
-    if (!name.trim()) next.name = "Name is required";
-    if (!email.trim()) next.email = "Email is required";
-    else if (!emailRegex.test(email.trim())) next.email = "Enter a valid email address";
-    if (!message.trim()) next.message = "Message is required";
-    else if (message.trim().length < 10) next.message = "Message must be at least 10 characters";
+    if (!name.trim()) next.name = c.errors.nameRequired;
+    if (!email.trim()) next.email = c.errors.emailRequired;
+    else if (!emailRegex.test(email.trim())) next.email = c.errors.invalidEmail;
+    if (!message.trim()) next.message = c.errors.messageRequired;
+    else if (message.trim().length < 10) next.message = c.errors.messageTooShort;
     return next;
   };
 
@@ -51,14 +55,14 @@ export default function ContactPage() {
     <section className="min-h-screen bg-white dark:bg-[#0a0a0a] py-16 px-4 md:px-10 transition-colors duration-200">
       <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-12 items-start">
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-8">Get in Touch</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-8">{c.title}</h1>
           <div className="space-y-6">
             <div className="flex gap-4 items-start">
               <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center shrink-0">
                 <i className="ri-mail-line text-xl text-green-600 dark:text-green-400" aria-hidden />
               </div>
               <div>
-                <p className="font-semibold text-gray-900 dark:text-gray-100">Email</p>
+                <p className="font-semibold text-gray-900 dark:text-gray-100">{c.emailLabel}</p>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">support@quickqr.com</p>
               </div>
             </div>
@@ -67,7 +71,7 @@ export default function ContactPage() {
                 <i className="ri-phone-line text-xl text-green-600 dark:text-green-400" aria-hidden />
               </div>
               <div>
-                <p className="font-semibold text-gray-900 dark:text-gray-100">Phone</p>
+                <p className="font-semibold text-gray-900 dark:text-gray-100">{c.phoneLabel}</p>
                 <p className="text-gray-600 dark:text-gray-400 text-sm">+48 123 456 789</p>
               </div>
             </div>
@@ -76,8 +80,8 @@ export default function ContactPage() {
                 <i className="ri-time-line text-xl text-green-600 dark:text-green-400" aria-hidden />
               </div>
               <div>
-                <p className="font-semibold text-gray-900 dark:text-gray-100">Response Time</p>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">Usually within 24 hours</p>
+                <p className="font-semibold text-gray-900 dark:text-gray-100">{c.responseTime}</p>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">{c.responseTimeText}</p>
               </div>
             </div>
           </div>
@@ -91,23 +95,23 @@ export default function ContactPage() {
                   <i className="ri-check-line text-3xl text-green-600 dark:text-green-400" aria-hidden />
                 </div>
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Message Sent!</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{c.successTitle}</h2>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                Thanks {name.trim()}, we&apos;ll get back to you soon.
+                Thanks {name.trim()}, {c.successMsg}
               </p>
               <button
                 type="button"
                 onClick={resetForm}
                 className="text-green-600 font-semibold hover:text-green-700 underline"
               >
-                Send another message
+                {c.sendAnother}
               </button>
             </div>
           ) : (
             <form noValidate onSubmit={handleSubmit} className="space-y-6">
               <div>
                 <label htmlFor="contact-name" className="block font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Name
+                  {c.name}
                 </label>
                 <input
                   id="contact-name"
@@ -116,14 +120,14 @@ export default function ContactPage() {
                   autoComplete="name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Your full name"
+                  placeholder={c.namePlaceholder}
                   className={inputClass("name")}
                 />
                 {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
               </div>
               <div>
                 <label htmlFor="contact-email" className="block font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Email
+                  {c.emailLabel}
                 </label>
                 <input
                   id="contact-email"
@@ -132,14 +136,14 @@ export default function ContactPage() {
                   autoComplete="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@example.com"
+                  placeholder={c.emailPlaceholder}
                   className={inputClass("email")}
                 />
                 {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
               </div>
               <div>
                 <label htmlFor="contact-message" className="block font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Message
+                  {c.message}
                 </label>
                 <textarea
                   id="contact-message"
@@ -148,7 +152,7 @@ export default function ContactPage() {
                   autoComplete="off"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Write your message here..."
+                  placeholder={c.messagePlaceholder}
                   className={inputClass("message")}
                 />
                 {errors.message && <p className="text-red-500 text-sm mt-1">{errors.message}</p>}
@@ -161,10 +165,10 @@ export default function ContactPage() {
                 {isLoading ? (
                   <>
                     <i className="ri-loader-4-line animate-spin text-xl" aria-hidden />
-                    Sending...
+                    {c.sending}
                   </>
                 ) : (
-                  "Send Message"
+                  c.send
                 )}
               </button>
             </form>
