@@ -85,6 +85,15 @@ export interface Translations {
     hourlyDensity: string; deviceType: string; operatingSystem: string; browserDist: string;
     scans: string; hour: string; dateLocale: string; up: string; down: string;
   };
+  menu: {
+    poweredBy: string; pageTitle: string; notFound: string;
+    uploadPdfMenu: string; uploadPdfDesc: string; orEnterUrl: string;
+    restaurantName: string; restaurantNamePlaceholder: string;
+    selectPdf: string; pdfSelected: string; uploading: string;
+    fileTooLarge: string; invalidType: string; uploadFailed: string;
+    myMenus: string; myMenusDesc: string; replacePdf: string; deleteMenu: string;
+    noMenus: string; createMenuHint: string; name: string; created: string; actions: string; viewPdf: string;
+  };
 }
 
 export const translations: Record<Lang, Translations> = {
@@ -273,6 +282,19 @@ export const translations: Record<Lang, Translations> = {
       hourlyDensity: 'Hourly Density', deviceType: 'Device Type', operatingSystem: 'Operating System', browserDist: 'Browser Distribution',
       scans: 'scans', hour: 'Hour', dateLocale: 'en-US', up: '↑', down: '↓',
     },
+    menu: {
+      poweredBy: 'Powered by QuickQR', pageTitle: 'Menu', notFound: 'Menu not found.',
+      uploadPdfMenu: 'Upload PDF Menu', uploadPdfDesc: 'Business exclusive: host your menu PDF directly on QuickQR.',
+      orEnterUrl: 'Or enter a menu URL instead',
+      restaurantName: 'Restaurant Name', restaurantNamePlaceholder: 'e.g. La Bella',
+      selectPdf: 'Select PDF file (max 10 MB)', pdfSelected: 'Selected:', uploading: 'Uploading…',
+      fileTooLarge: 'File is too large (max 10 MB)', invalidType: 'Only PDF files are allowed.',
+      uploadFailed: 'Upload failed. Please try again.',
+      myMenus: 'My Menus', myMenusDesc: 'Manage your hosted PDF menus. QR codes stay the same when you update the PDF.',
+      replacePdf: 'Replace PDF', deleteMenu: 'Delete', noMenus: 'No menus yet.',
+      createMenuHint: 'Generate one from the Restaurant Menu type on the Generate page.',
+      name: 'Name', created: 'Created', actions: 'Actions', viewPdf: 'View PDF',
+    },
   },
 
   tr: {
@@ -460,6 +482,19 @@ export const translations: Record<Lang, Translations> = {
       hourlyDensity: 'Saatlik Yoğunluk', deviceType: 'Cihaz Tipi', operatingSystem: 'İşletim Sistemi', browserDist: 'Tarayıcı Dağılımı',
       scans: 'tarama', hour: 'Saat', dateLocale: 'tr-TR', up: '↑', down: '↓',
     },
+    menu: {
+      poweredBy: 'QuickQR tarafından', pageTitle: 'Menü', notFound: 'Menü bulunamadı.',
+      uploadPdfMenu: 'PDF Menü Yükle', uploadPdfDesc: 'Business\'a özel: menü PDF\'inizi doğrudan QuickQR\'da barındırın.',
+      orEnterUrl: 'Veya bir menü URL\'si girin',
+      restaurantName: 'Restoran Adı', restaurantNamePlaceholder: 'örn. La Bella',
+      selectPdf: 'PDF dosyası seçin (maks. 10 MB)', pdfSelected: 'Seçilen:', uploading: 'Yükleniyor…',
+      fileTooLarge: 'Dosya çok büyük (maks. 10 MB)', invalidType: 'Yalnızca PDF dosyalarına izin verilir.',
+      uploadFailed: 'Yükleme başarısız. Lütfen tekrar deneyin.',
+      myMenus: 'Menülerim', myMenusDesc: 'Barındırılan PDF menülerinizi yönetin. PDF güncellense de QR kodları değişmez.',
+      replacePdf: 'PDF\'i Değiştir', deleteMenu: 'Sil', noMenus: 'Henüz menü yok.',
+      createMenuHint: 'Oluştur sayfasındaki Restoran Menüsü tipinden bir tane oluşturun.',
+      name: 'Ad', created: 'Oluşturulma', actions: 'İşlemler', viewPdf: 'PDF\'i Görüntüle',
+    },
   },
 
   pl: {
@@ -646,6 +681,19 @@ export const translations: Record<Lang, Translations> = {
       last7Days: 'Ostatnie 7 dni', noScansYet: 'Brak skanów. Udostępnij swój kod QR!', noScans: 'Brak skanów.',
       hourlyDensity: 'Gęstość godzinowa', deviceType: 'Typ urządzenia', operatingSystem: 'System operacyjny', browserDist: 'Dystrybucja przeglądarek',
       scans: 'skanów', hour: 'Godzina', dateLocale: 'pl-PL', up: '↑', down: '↓',
+    },
+    menu: {
+      poweredBy: 'Powered by QuickQR', pageTitle: 'Menu', notFound: 'Nie znaleziono menu.',
+      uploadPdfMenu: 'Prześlij menu PDF', uploadPdfDesc: 'Tylko dla Business: hostuj swoje menu PDF bezpośrednio w QuickQR.',
+      orEnterUrl: 'Lub podaj adres URL menu',
+      restaurantName: 'Nazwa restauracji', restaurantNamePlaceholder: 'np. La Bella',
+      selectPdf: 'Wybierz plik PDF (maks. 10 MB)', pdfSelected: 'Wybrany:', uploading: 'Przesyłanie…',
+      fileTooLarge: 'Plik jest zbyt duży (maks. 10 MB)', invalidType: 'Dozwolone są tylko pliki PDF.',
+      uploadFailed: 'Przesyłanie nie powiodło się. Spróbuj ponownie.',
+      myMenus: 'Moje menu', myMenusDesc: 'Zarządzaj hostowanymi menu PDF. Kody QR pozostają takie same po aktualizacji PDF.',
+      replacePdf: 'Zastąp PDF', deleteMenu: 'Usuń', noMenus: 'Brak menu.',
+      createMenuHint: 'Utwórz je na stronie Generuj, wybierając typ Menu restauracji.',
+      name: 'Nazwa', created: 'Utworzono', actions: 'Akcje', viewPdf: 'Zobacz PDF',
     },
   },
 };

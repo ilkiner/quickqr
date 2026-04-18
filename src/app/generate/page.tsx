@@ -165,6 +165,9 @@ export default function GeneratePage() {
   const [frameLabel, setFrameLabel] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isDynamic, setIsDynamic] = useState(false);
+  const [pdfMode, setPdfMode] = useState(false);
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfUploading, setPdfUploading] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -453,16 +456,98 @@ export default function GeneratePage() {
             )}
 
             {activeType === "restaurant" && (
-              <form noValidate onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{g.menuUrl}</label>
-                  <input type="url" autoComplete="url" value={formValues.url ?? ""} onChange={(e) => setField("url", e.target.value)} placeholder="https://yourrestaurant.com/menu" className={inputClass("url")} />
-                  {fieldError("url")}
-                </div>
-                <button type="submit" disabled={submitting} className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-semibold">
-                  {submitting ? g.generating : g.generateQR}
-                </button>
-              </form>
+              <div className="space-y-4">
+                {/* Business PDF upload toggle */}
+                {planLoaded && profilePlan === "business" && (
+                  <div className="flex rounded-lg overflow-hidden border border-gray-200 dark:border-white/10">
+                    <button
+                      type="button"
+                      onClick={() => { setPdfMode(false); setPdfFile(null); setErrors({}); }}
+                      className={`flex-1 py-2 text-sm font-medium transition ${!pdfMode ? "bg-green-600 text-white" : "bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400"}`}
+                    >
+                      {g.menuUrl}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setPdfMode(true); setErrors({}); }}
+                      className={`flex-1 py-2 text-sm font-medium transition ${pdfMode ? "bg-green-600 text-white" : "bg-gray-50 dark:bg-white/5 text-gray-600 dark:text-gray-400"}`}
+                    >
+                      {t.menu.uploadPdfMenu}
+                    </button>
+                  </div>
+                )}
+
+                {pdfMode && profilePlan === "business" ? (
+                  <form noValidate onSubmit={async (e) => {
+                    e.preventDefault();
+                    const name = formValues.restaurantName?.trim();
+                    if (!name) { setErrors({ restaurantName: g.errors.nameRequired }); return; }
+                    if (!pdfFile) { setErrors({ pdf: t.menu.selectPdf }); return; }
+                    if (pdfFile.size > 10 * 1024 * 1024) { setErrors({ pdf: t.menu.fileTooLarge }); return; }
+                    if (pdfFile.type !== "application/pdf") { setErrors({ pdf: t.menu.invalidType }); return; }
+                    setErrors({});
+                    setPdfUploading(true);
+                    setSubmitting(true);
+                    try {
+                      const supabase = createClient();
+                      const { data: { user } } = await supabase.auth.getUser();
+                      if (!user) { setErrors({ _form: g.errors.saveFailed }); return; }
+                      const filePath = `${user.id}/${Date.now()}.pdf`;
+                      const { error: uploadError } = await supabase.storage.from("menus").upload(filePath, pdfFile, { contentType: "application/pdf", upsert: false });
+                      if (uploadError) { setErrors({ _form: t.menu.uploadFailed }); return; }
+                      const { data: { publicUrl } } = supabase.storage.from("menus").getPublicUrl(filePath);
+                      const { data: inserted, error: insertError } = await supabase.from("menus").insert({ user_id: user.id, name, pdf_url: publicUrl }).select("id").single();
+                      if (insertError || !inserted) { setErrors({ _form: t.menu.uploadFailed }); return; }
+                      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
+                      const menuUrl = `${baseUrl}/menu/${inserted.id as string}`;
+                      const colorParam = `&color=${qrColor.replace("#", "")}&bgcolor=${bgColor.replace("#", "")}`;
+                      const encoded = encodeURIComponent(menuUrl);
+                      const generatedUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encoded}${colorParam}`;
+                      const proxyUrl = `/api/qr-image?url=${encodeURIComponent(generatedUrl)}`;
+                      await supabase.from("qr_codes").insert({ user_id: user.id, type: "restaurant", title: name, data: menuUrl, qr_url: generatedUrl, is_dynamic: false });
+                      setQrUrl(generatedUrl); setQrProxyUrl(proxyUrl); setImgLoaded(false); setImgError(false); setSavePromptVisible(false);
+                    } catch {
+                      setErrors({ _form: t.menu.uploadFailed });
+                    } finally {
+                      setPdfUploading(false);
+                      setSubmitting(false);
+                    }
+                  }} className="space-y-4">
+                    <p className="text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md px-3 py-2">
+                      <i className="ri-file-pdf-line mr-1" aria-hidden /> {t.menu.uploadPdfDesc}
+                    </p>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t.menu.restaurantName}</label>
+                      <input type="text" value={formValues.restaurantName ?? ""} onChange={(e) => setField("restaurantName", e.target.value)} placeholder={t.menu.restaurantNamePlaceholder} className={inputClass("restaurantName")} />
+                      {errors.restaurantName && <p className="text-red-500 text-sm mt-1">{errors.restaurantName}</p>}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{t.menu.selectPdf}</label>
+                      <input
+                        type="file" accept="application/pdf"
+                        onChange={(e) => { const f = e.target.files?.[0] ?? null; setPdfFile(f); setErrors({}); }}
+                        className="mt-1 w-full text-sm text-gray-600 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100 dark:file:bg-green-900/30 dark:file:text-green-400"
+                      />
+                      {pdfFile && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{t.menu.pdfSelected} {pdfFile.name}</p>}
+                      {errors.pdf && <p className="text-red-500 text-sm mt-1">{errors.pdf}</p>}
+                    </div>
+                    <button type="submit" disabled={submitting || pdfUploading} className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-semibold disabled:opacity-50">
+                      {pdfUploading ? t.menu.uploading : g.generateQR}
+                    </button>
+                  </form>
+                ) : (
+                  <form noValidate onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">{g.menuUrl}</label>
+                      <input type="url" autoComplete="url" value={formValues.url ?? ""} onChange={(e) => setField("url", e.target.value)} placeholder="https://yourrestaurant.com/menu" className={inputClass("url")} />
+                      {fieldError("url")}
+                    </div>
+                    <button type="submit" disabled={submitting} className="w-full bg-green-600 hover:bg-green-700 text-white py-2 rounded-md font-semibold">
+                      {submitting ? g.generating : g.generateQR}
+                    </button>
+                  </form>
+                )}
+              </div>
             )}
 
             {activeType === "social" && (

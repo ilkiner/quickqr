@@ -25,6 +25,13 @@ type QrCodeRow = {
   redirect_url: string | null;
 };
 
+type MenuRow = {
+  id: string;
+  name: string;
+  pdf_url: string;
+  created_at: string;
+};
+
 const planLimitMap: Record<string, string> = {
   free: "5",
   pro: "100",
@@ -45,6 +52,7 @@ function SuccessBanner() {
 export default function DashboardPage() {
   const { t } = useLanguage();
   const d = t.dashboard;
+  // t.menu used in My Menus section
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -54,6 +62,9 @@ export default function DashboardPage() {
   const [editUrl, setEditUrl] = useState("");
   const [monthlyCreatedCount, setMonthlyCreatedCount] = useState(0);
   const [totalCreatedCount, setTotalCreatedCount] = useState(0);
+  const [menus, setMenus] = useState<MenuRow[]>([]);
+  const [menuReplaceId, setMenuReplaceId] = useState<string | null>(null);
+  const [menuReplaceUploading, setMenuReplaceUploading] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -88,6 +99,13 @@ export default function DashboardPage() {
       setTotalCreatedCount(totalCount ?? 0);
       setProfile((profileData as Profile | null) ?? null);
       setQrRows((qrData as QrCodeRow[] | null) ?? []);
+
+      // Fetch menus for business users
+      const plan = (profileData as Profile | null)?.plan;
+      if (plan === "business") {
+        const { data: menuData } = await supabase.from("menus").select("id, name, pdf_url, created_at").eq("user_id", user.id).order("created_at", { ascending: false });
+        setMenus((menuData as MenuRow[] | null) ?? []);
+      }
     } catch {
       setError(d.loadError);
     } finally {
@@ -354,6 +372,111 @@ export default function DashboardPage() {
                 <i className="ri-id-card-line text-lg" aria-hidden />
                 {d.vcard.btn}
               </Link>
+            </section>
+          )}
+
+          {/* My Menus — Business only */}
+          {plan === "business" && (
+            <section className="bg-white dark:bg-[#141414] rounded-xl border border-gray-100 dark:border-white/10 shadow-sm p-5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <div className="space-y-0.5">
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <i className="ri-file-pdf-line text-green-500" aria-hidden />
+                    {t.menu.myMenus}
+                  </h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{t.menu.myMenusDesc}</p>
+                </div>
+              </div>
+              {loading ? (
+                <div className="space-y-3">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <div key={i} className="h-12 bg-gray-100 dark:bg-white/10 animate-pulse rounded-md" />
+                  ))}
+                </div>
+              ) : menus.length === 0 ? (
+                <div className="text-center py-8 space-y-2">
+                  <i className="ri-file-pdf-line text-3xl text-gray-300 dark:text-gray-600 block" />
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">{t.menu.noMenus}</p>
+                  <p className="text-gray-400 dark:text-gray-500 text-xs">{t.menu.createMenuHint}</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-gray-500 dark:text-gray-400 border-b dark:border-white/10">
+                        <th className="py-3 pr-4">{t.menu.name}</th>
+                        <th className="py-3 pr-4">{t.menu.created}</th>
+                        <th className="py-3">{t.menu.actions}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {menus.map((menu) => (
+                        <tr key={menu.id} className="border-b dark:border-white/10 last:border-b-0 text-gray-800 dark:text-gray-300">
+                          <td className="py-3 pr-4 font-medium">{menu.name}</td>
+                          <td className="py-3 pr-4">{new Date(menu.created_at).toLocaleDateString()}</td>
+                          <td className="py-3">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <a
+                                href={menu.pdf_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-3 py-1 border border-gray-200 dark:border-white/10 rounded-md text-sm hover:bg-gray-50 dark:hover:bg-white/5 dark:text-gray-300"
+                              >
+                                {t.menu.viewPdf}
+                              </a>
+                              <label className="px-3 py-1 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 rounded-md hover:bg-green-50 dark:hover:bg-green-900/20 cursor-pointer text-sm">
+                                {menuReplaceUploading && menuReplaceId === menu.id ? (
+                                  <span className="flex items-center gap-1"><i className="ri-loader-4-line animate-spin" />{t.menu.uploading}</span>
+                                ) : t.menu.replacePdf}
+                                <input
+                                  type="file" accept="application/pdf" className="hidden"
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (!file) return;
+                                    if (file.size > 10 * 1024 * 1024) { setError(t.menu.fileTooLarge); return; }
+                                    if (file.type !== "application/pdf") { setError(t.menu.invalidType); return; }
+                                    setMenuReplaceId(menu.id);
+                                    setMenuReplaceUploading(true);
+                                    try {
+                                      const supabase = createClient();
+                                      const { data: { user } } = await supabase.auth.getUser();
+                                      if (!user) return;
+                                      const filePath = `${user.id}/${Date.now()}.pdf`;
+                                      const { error: uploadErr } = await supabase.storage.from("menus").upload(filePath, file, { contentType: "application/pdf" });
+                                      if (uploadErr) { setError(t.menu.uploadFailed); return; }
+                                      const { data: { publicUrl } } = supabase.storage.from("menus").getPublicUrl(filePath);
+                                      await supabase.from("menus").update({ pdf_url: publicUrl, updated_at: new Date().toISOString() }).eq("id", menu.id);
+                                      setMenus((prev) => prev.map((m) => m.id === menu.id ? { ...m, pdf_url: publicUrl } : m));
+                                    } catch {
+                                      setError(t.menu.uploadFailed);
+                                    } finally {
+                                      setMenuReplaceUploading(false);
+                                      setMenuReplaceId(null);
+                                      e.target.value = "";
+                                    }
+                                  }}
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const supabase = createClient();
+                                  const { error: delErr } = await supabase.from("menus").delete().eq("id", menu.id);
+                                  if (delErr) { setError(delErr.message); return; }
+                                  setMenus((prev) => prev.filter((m) => m.id !== menu.id));
+                                }}
+                                className="px-3 py-1 text-red-600 border border-red-100 dark:border-red-900/40 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 text-sm"
+                              >
+                                {t.menu.deleteMenu}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </section>
           )}
         </div>
