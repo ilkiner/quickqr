@@ -6,6 +6,7 @@ import Link from "next/link";
 import Header from "src/components/Header";
 import Footer from "src/components/Footer";
 import { createClient } from "src/lib/supabase/client";
+import { useLanguage } from "src/contexts/LanguageContext";
 import {
   BarChart,
   Bar,
@@ -80,12 +81,12 @@ function EmptyState({ text }: { text: string }) {
 }
 
 // ── Custom dark tooltip ────────────────────────────────────────────────────
-function DarkTooltip({ active, payload, label }: Record<string, unknown>) {
+function DarkTooltip({ active, payload, label, scansLabel }: Record<string, unknown> & { scansLabel?: string }) {
   if (!active || !Array.isArray(payload) || payload.length === 0) return null;
   return (
     <div style={darkTooltipStyle} className="px-3 py-2">
       <p className="text-gray-400 text-xs mb-1">{label as string}</p>
-      <p className="font-semibold text-green-400">{(payload[0] as { value: number }).value} tarama</p>
+      <p className="font-semibold text-green-400">{(payload[0] as { value: number }).value} {scansLabel ?? "scans"}</p>
     </div>
   );
 }
@@ -93,6 +94,9 @@ function DarkTooltip({ active, payload, label }: Record<string, unknown>) {
 // ── Main page ──────────────────────────────────────────────────────────────
 export default function AnalyticsPage() {
   const router = useRouter();
+  const { t } = useLanguage();
+  const a = t.analytics;
+
   const [loading, setLoading] = useState(true);
   const [plan, setPlan] = useState<"free" | "pro" | "business" | null>(null);
   const [scans, setScans] = useState<Scan[]>([]);
@@ -164,11 +168,11 @@ export default function AnalyticsPage() {
     const days: Record<string, number> = {};
     for (let i = 6; i >= 0; i--) {
       const d = new Date(now - i * 24 * 60 * 60 * 1000);
-      const key = d.toLocaleDateString("tr-TR", { day: "2-digit", month: "short" });
+      const key = d.toLocaleDateString(a.dateLocale, { day: "2-digit", month: "short" });
       days[key] = 0;
     }
     for (const s of thisWeekScans) {
-      const key = new Date(s.scanned_at).toLocaleDateString("tr-TR", { day: "2-digit", month: "short" });
+      const key = new Date(s.scanned_at).toLocaleDateString(a.dateLocale, { day: "2-digit", month: "short" });
       if (key in days) days[key]++;
     }
     const daily = Object.entries(days).map(([name, value]) => ({ name, value }));
@@ -186,7 +190,7 @@ export default function AnalyticsPage() {
     const topQr = topQrId ? (qrMap[topQrId] ?? "–") : "–";
 
     return { thisWeek, lastWeek, weekChange, daily, hourly: hours, topQr, peakHour };
-  }, [scans, qrMap]);
+  }, [scans, qrMap, a.dateLocale]);
 
   const deviceData = useMemo(() => countBy(scans, (s) => s.device_type ?? "Other"), [scans]);
   const osData = useMemo(() => countBy(scans, (s) => s.os ?? "Other"), [scans]);
@@ -217,10 +221,10 @@ export default function AnalyticsPage() {
             <div className="w-16 h-16 bg-green-600/20 rounded-full flex items-center justify-center mx-auto">
               <i className="ri-bar-chart-2-line text-green-500 text-3xl" />
             </div>
-            <h1 className="text-2xl font-bold text-white">Analytics</h1>
-            <p className="text-gray-400">QR tarama analitiği Pro ve Business planlarda kullanılabilir.</p>
+            <h1 className="text-2xl font-bold text-white">{a.paywallTitle}</h1>
+            <p className="text-gray-400">{a.paywallDesc}</p>
             <Link href="/pricing" className="inline-flex bg-green-600 hover:bg-green-700 text-white px-6 py-2.5 rounded-xl font-semibold transition">
-              Pro&apos;ya Geç
+              {a.upgradeBtn}
             </Link>
           </div>
         </main>
@@ -238,11 +242,11 @@ export default function AnalyticsPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">Analytics</h1>
-              <p className="text-sm text-gray-500 mt-1">Son 14 günün QR tarama verileri</p>
+              <h1 className="text-2xl font-bold text-white">{a.title}</h1>
+              <p className="text-sm text-gray-500 mt-1">{a.subtitle}</p>
             </div>
             <Link href="/dashboard" className="text-sm text-gray-400 hover:text-white flex items-center gap-1.5 transition">
-              <i className="ri-arrow-left-line" /> Dashboard
+              <i className="ri-arrow-left-line" /> {a.backToDashboard}
             </Link>
           </div>
 
@@ -250,52 +254,52 @@ export default function AnalyticsPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <SummaryCard
               icon="ri-qr-scan-2-line"
-              label="Bu Hafta"
+              label={a.thisWeek}
               value={thisWeek}
               sub={
                 weekChange === null
-                  ? "önceki veri yok"
+                  ? a.noPreviousData
                   : weekChange >= 0
-                  ? `↑ %${weekChange} geçen haftaya göre`
-                  : `↓ %${Math.abs(weekChange)} geçen haftaya göre`
+                  ? `${a.up} ${weekChange}% ${a.vsLastWeek}`
+                  : `${a.down} ${Math.abs(weekChange)}% ${a.vsLastWeek}`
               }
               subColor={weekChange === null ? "text-gray-500" : weekChange >= 0 ? "text-green-400" : "text-red-400"}
             />
             <SummaryCard
               icon="ri-star-line"
-              label="En Çok Taranan"
+              label={a.mostScanned}
               value={topQr}
               valueSmall
-              sub="bu hafta"
+              sub={a.thisWeekLabel}
               subColor="text-gray-500"
             />
             <SummaryCard
               icon="ri-time-line"
-              label="Yoğun Saat"
+              label={a.peakHour}
               value={peakHour.value > 0 ? `${String(peakHour.hour).padStart(2, "0")}:00` : "–"}
-              sub={peakHour.value > 0 ? `${peakHour.value} tarama` : "henüz veri yok"}
+              sub={peakHour.value > 0 ? `${peakHour.value} ${a.scans}` : a.noDataYet}
               subColor="text-gray-500"
             />
             <SummaryCard
               icon="ri-device-line"
-              label="Toplam (14 gün)"
+              label={a.total14Days}
               value={scans.length}
-              sub={`${lastWeek} geçen hafta`}
+              sub={`${lastWeek} ${a.lastWeek}`}
               subColor="text-gray-500"
             />
           </div>
 
           {/* ── 7-day bar chart ── */}
           <div className="bg-gray-900 rounded-2xl shadow-lg p-6">
-            <h2 className="text-white font-semibold mb-5">Son 7 Gün</h2>
+            <h2 className="text-white font-semibold mb-5">{a.last7Days}</h2>
             {scans.length === 0 ? (
-              <EmptyState text="Henüz tarama yok. QR kodunuzu paylaşın!" />
+              <EmptyState text={a.noScansYet} />
             ) : (
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={daily} barSize={32}>
                   <XAxis dataKey="name" tick={{ fill: "#6b7280", fontSize: 12 }} axisLine={false} tickLine={false} />
                   <YAxis allowDecimals={false} tick={{ fill: "#6b7280", fontSize: 12 }} axisLine={false} tickLine={false} width={28} />
-                  <Tooltip content={<DarkTooltip />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+                  <Tooltip content={<DarkTooltip scansLabel={a.scans} />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
                   <Bar dataKey="value" fill={GREEN} radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -304,9 +308,9 @@ export default function AnalyticsPage() {
 
           {/* ── Hourly heatmap ── */}
           <div className="bg-gray-900 rounded-2xl shadow-lg p-6">
-            <h2 className="text-white font-semibold mb-5">Saatlik Yoğunluk</h2>
+            <h2 className="text-white font-semibold mb-5">{a.hourlyDensity}</h2>
             {scans.length === 0 ? (
-              <EmptyState text="Henüz tarama yok." />
+              <EmptyState text={a.noScans} />
             ) : (
               <div className="grid grid-cols-12 gap-1.5">
                 {hourly.map(({ hour, value }) => {
@@ -321,7 +325,7 @@ export default function AnalyticsPage() {
                   return (
                     <div
                       key={hour}
-                      title={`Saat ${String(hour).padStart(2, "0")}:00 — ${value} tarama`}
+                      title={`${a.hour} ${String(hour).padStart(2, "0")}:00 — ${value} ${a.scans}`}
                       className={`${bg} rounded-lg aspect-square flex flex-col items-center justify-center cursor-default transition-all hover:ring-2 hover:ring-green-400`}
                     >
                       <span className="text-[10px] text-gray-400 leading-none">{String(hour).padStart(2, "0")}</span>
@@ -335,21 +339,21 @@ export default function AnalyticsPage() {
 
           {/* ── Device & OS donut charts ── */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <DonutCard title="Cihaz Tipi" data={deviceData} colorMap={DEVICE_COLORS} />
-            <DonutCard title="İşletim Sistemi" data={osData} colorMap={OS_COLORS} />
+            <DonutCard title={a.deviceType} data={deviceData} colorMap={DEVICE_COLORS} scansLabel={a.scans} />
+            <DonutCard title={a.operatingSystem} data={osData} colorMap={OS_COLORS} scansLabel={a.scans} />
           </div>
 
           {/* ── Browser horizontal bars ── */}
           <div className="bg-gray-900 rounded-2xl shadow-lg p-6">
-            <h2 className="text-white font-semibold mb-5">Tarayıcı Dağılımı</h2>
+            <h2 className="text-white font-semibold mb-5">{a.browserDist}</h2>
             {browserData.length === 0 ? (
-              <EmptyState text="Henüz tarama yok." />
+              <EmptyState text={a.noScans} />
             ) : (
               <ResponsiveContainer width="100%" height={Math.max(180, browserData.length * 48)}>
                 <BarChart data={browserData} layout="vertical" barSize={20}>
                   <XAxis type="number" allowDecimals={false} tick={{ fill: "#6b7280", fontSize: 12 }} axisLine={false} tickLine={false} />
                   <YAxis type="category" dataKey="name" width={80} tick={{ fill: "#d1d5db", fontSize: 13 }} axisLine={false} tickLine={false} />
-                  <Tooltip content={<DarkTooltip />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
+                  <Tooltip content={<DarkTooltip scansLabel={a.scans} />} cursor={{ fill: "rgba(255,255,255,0.04)" }} />
                   <Bar dataKey="value" radius={[0, 6, 6, 0]}>
                     {browserData.map((_, idx) => (
                       <Cell key={idx} fill={GREENS[idx % GREENS.length]} />
@@ -402,16 +406,18 @@ function DonutCard({
   title,
   data,
   colorMap,
+  scansLabel,
 }: {
   title: string;
   data: { name: string; value: number }[];
   colorMap: Record<string, string>;
+  scansLabel: string;
 }) {
   return (
     <div className="bg-gray-900 rounded-2xl shadow-lg p-6">
       <h2 className="text-white font-semibold mb-4">{title}</h2>
       {data.length === 0 ? (
-        <EmptyState text="Henüz tarama yok." />
+        <EmptyState text="—" />
       ) : (
         <ResponsiveContainer width="100%" height={220}>
           <PieChart>
@@ -430,7 +436,7 @@ function DonutCard({
             </Pie>
             <Tooltip
               contentStyle={darkTooltipStyle}
-              formatter={(v) => [`${v as number} tarama`, ""]}
+              formatter={(v) => [`${v as number} ${scansLabel}`, ""]}
             />
             <Legend
               iconType="circle"

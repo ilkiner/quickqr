@@ -70,6 +70,21 @@ export interface Translations {
     vcard: { title: string; desc: string; btn: string };
     successBanner: string; signInRequired: string; loadError: string;
   };
+  blog: {
+    resources: string; title: string; subtitle: string; readArticle: string;
+    ctaTitle: string; ctaDesc: string; ctaBtn: string;
+    allArticles: string; moreArticles: string;
+    articleCtaTitle: string; articleCtaDesc: string; articleCtaBtn: string;
+  };
+  analytics: {
+    title: string; subtitle: string; backToDashboard: string;
+    paywallTitle: string; paywallDesc: string; upgradeBtn: string;
+    thisWeek: string; mostScanned: string; peakHour: string; total14Days: string;
+    noPreviousData: string; vsLastWeek: string; thisWeekLabel: string; noDataYet: string; lastWeek: string;
+    last7Days: string; noScansYet: string; noScans: string;
+    hourlyDensity: string; deviceType: string; operatingSystem: string; browserDist: string;
+    scans: string; hour: string; dateLocale: string; up: string; down: string;
+  };
 }
 
 export const translations: Record<Lang, Translations> = {
@@ -242,6 +257,22 @@ export const translations: Record<Lang, Translations> = {
       signInRequired: 'Please sign in to view your dashboard.',
       loadError: 'Could not load dashboard data. Please try again.',
     },
+    blog: {
+      resources: 'Resources', title: 'QuickQR Blog', subtitle: 'Guides, tips, and ideas to help you get more out of QR codes.',
+      readArticle: 'Read article',
+      ctaTitle: 'Ready to create your first QR code?', ctaDesc: 'Free to use — no account required for basic generation.', ctaBtn: 'Generate QR Free',
+      allArticles: 'All articles', moreArticles: 'More articles',
+      articleCtaTitle: 'Create your QR code in seconds', articleCtaDesc: 'Free to use — no account required for basic generation.', articleCtaBtn: 'Generate QR Free',
+    },
+    analytics: {
+      title: 'Analytics', subtitle: 'QR scan data for the last 14 days', backToDashboard: 'Dashboard',
+      paywallTitle: 'Analytics', paywallDesc: 'QR scan analytics is available on Pro and Business plans.', upgradeBtn: 'Upgrade to Pro',
+      thisWeek: 'This Week', mostScanned: 'Most Scanned', peakHour: 'Peak Hour', total14Days: 'Total (14 days)',
+      noPreviousData: 'no previous data', vsLastWeek: 'vs last week', thisWeekLabel: 'this week', noDataYet: 'no data yet', lastWeek: 'last week',
+      last7Days: 'Last 7 Days', noScansYet: 'No scans yet. Share your QR code!', noScans: 'No scans yet.',
+      hourlyDensity: 'Hourly Density', deviceType: 'Device Type', operatingSystem: 'Operating System', browserDist: 'Browser Distribution',
+      scans: 'scans', hour: 'Hour', dateLocale: 'en-US', up: '↑', down: '↓',
+    },
   },
 
   tr: {
@@ -413,6 +444,22 @@ export const translations: Record<Lang, Translations> = {
       signInRequired: 'Panoyu görüntülemek için lütfen giriş yapın.',
       loadError: 'Pano verileri yüklenemedi. Lütfen tekrar deneyin.',
     },
+    blog: {
+      resources: 'Kaynaklar', title: 'QuickQR Blog', subtitle: 'QR kodlarından daha fazla yararlanmanıza yardımcı olacak rehberler, ipuçları ve fikirler.',
+      readArticle: 'Makaleyi oku',
+      ctaTitle: 'İlk QR kodunuzu oluşturmaya hazır mısınız?', ctaDesc: 'Temel kullanım için ücretsiz — hesap gerekmez.', ctaBtn: 'Ücretsiz QR Oluştur',
+      allArticles: 'Tüm makaleler', moreArticles: 'Daha fazla makale',
+      articleCtaTitle: 'QR kodunuzu saniyeler içinde oluşturun', articleCtaDesc: 'Temel kullanım için ücretsiz — hesap gerekmez.', articleCtaBtn: 'Ücretsiz QR Oluştur',
+    },
+    analytics: {
+      title: 'Analitik', subtitle: 'Son 14 günün QR tarama verileri', backToDashboard: 'Panel',
+      paywallTitle: 'Analitik', paywallDesc: 'QR tarama analitiği Pro ve Business planlarda kullanılabilir.', upgradeBtn: "Pro'ya Geç",
+      thisWeek: 'Bu Hafta', mostScanned: 'En Çok Taranan', peakHour: 'Yoğun Saat', total14Days: 'Toplam (14 gün)',
+      noPreviousData: 'önceki veri yok', vsLastWeek: 'geçen haftaya göre', thisWeekLabel: 'bu hafta', noDataYet: 'henüz veri yok', lastWeek: 'geçen hafta',
+      last7Days: 'Son 7 Gün', noScansYet: 'Henüz tarama yok. QR kodunuzu paylaşın!', noScans: 'Henüz tarama yok.',
+      hourlyDensity: 'Saatlik Yoğunluk', deviceType: 'Cihaz Tipi', operatingSystem: 'İşletim Sistemi', browserDist: 'Tarayıcı Dağılımı',
+      scans: 'tarama', hour: 'Saat', dateLocale: 'tr-TR', up: '↑', down: '↓',
+    },
   },
 
   pl: {
@@ -583,6 +630,22 @@ export const translations: Record<Lang, Translations> = {
       successBanner: 'Płatność zakończona sukcesem! Twój plan został ulepszony. Może to chwilę zająć, zanim zmiany będą widoczne poniżej.',
       signInRequired: 'Zaloguj się, aby wyświetlić swój panel.',
       loadError: 'Nie udało się załadować danych panelu. Spróbuj ponownie.',
+    },
+    blog: {
+      resources: 'Zasoby', title: 'Blog QuickQR', subtitle: 'Przewodniki, wskazówki i pomysły, które pomogą Ci lepiej korzystać z kodów QR.',
+      readArticle: 'Czytaj artykuł',
+      ctaTitle: 'Gotowy stworzyć swój pierwszy kod QR?', ctaDesc: 'Bezpłatne w użyciu — konto nie jest wymagane.', ctaBtn: 'Generuj QR za darmo',
+      allArticles: 'Wszystkie artykuły', moreArticles: 'Więcej artykułów',
+      articleCtaTitle: 'Utwórz kod QR w kilka sekund', articleCtaDesc: 'Bezpłatne w użyciu — konto nie jest wymagane.', articleCtaBtn: 'Generuj QR za darmo',
+    },
+    analytics: {
+      title: 'Analityki', subtitle: 'Dane skanowania QR z ostatnich 14 dni', backToDashboard: 'Panel',
+      paywallTitle: 'Analityki', paywallDesc: 'Analityki skanowania QR są dostępne w planach Pro i Business.', upgradeBtn: 'Przejdź na Pro',
+      thisWeek: 'Ten tydzień', mostScanned: 'Najczęściej skanowane', peakHour: 'Szczyt godzinowy', total14Days: 'Łącznie (14 dni)',
+      noPreviousData: 'brak poprzednich danych', vsLastWeek: 'vs poprzedni tydzień', thisWeekLabel: 'w tym tygodniu', noDataYet: 'brak danych', lastWeek: 'poprzedni tydzień',
+      last7Days: 'Ostatnie 7 dni', noScansYet: 'Brak skanów. Udostępnij swój kod QR!', noScans: 'Brak skanów.',
+      hourlyDensity: 'Gęstość godzinowa', deviceType: 'Typ urządzenia', operatingSystem: 'System operacyjny', browserDist: 'Dystrybucja przeglądarek',
+      scans: 'skanów', hour: 'Godzina', dateLocale: 'pl-PL', up: '↑', down: '↓',
     },
   },
 };
