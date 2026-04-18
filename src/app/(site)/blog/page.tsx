@@ -1,33 +1,34 @@
-import Link from "next/link";
-import type { Metadata } from "next";
-import { blogPosts } from "../../../lib/blog";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Blog — QuickQR",
-  description:
-    "Tips, guides, and ideas on using QR codes to grow your business.",
-};
+import Link from "next/link";
+import { useLanguage } from "src/contexts/LanguageContext";
+import { multilingualPosts } from "src/lib/blog";
 
 export default function BlogPage() {
+  const { lang, t } = useLanguage();
+  const b = t.blog;
+
+  const posts = multilingualPosts.map((p) => ({ slug: p.slug, ...p[lang] }));
+
   return (
     <main className="bg-white dark:bg-[#0a0a0a] min-h-screen transition-colors duration-200">
       {/* Hero */}
       <section className="bg-gray-900 dark:bg-[#0d0d0d] py-16 px-4 text-center border-b border-transparent dark:border-white/10">
         <span className="inline-block bg-green-600/20 text-green-400 rounded-full px-4 py-1 text-sm font-medium mb-4">
-          Resources
+          {b.resources}
         </span>
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-          QuickQR Blog
+          {b.title}
         </h1>
         <p className="text-gray-400 max-w-xl mx-auto text-lg">
-          Guides, tips, and ideas to help you get more out of QR codes.
+          {b.subtitle}
         </p>
       </section>
 
       {/* Post grid */}
       <section className="max-w-5xl mx-auto px-4 py-14">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {blogPosts.map((post) => (
+          {posts.map((post) => (
             <Link
               key={post.slug}
               href={`/blog/${post.slug}`}
@@ -47,7 +48,7 @@ export default function BlogPage() {
                   {post.description}
                 </p>
                 <span className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-green-600 dark:text-green-400 group-hover:gap-2 transition-all">
-                  Read article
+                  {b.readArticle}
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                   </svg>
@@ -62,16 +63,16 @@ export default function BlogPage() {
       <section className="bg-gray-50 dark:bg-[#0d0d0d] border-t border-transparent dark:border-white/10 py-14 px-4 transition-colors duration-200">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
-            Ready to create your first QR code?
+            {b.ctaTitle}
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Free to use — no account required for basic generation.
+            {b.ctaDesc}
           </p>
           <Link
             href="/generate"
             className="inline-block bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-8 rounded-3xl transition"
           >
-            Generate QR Free
+            {b.ctaBtn}
           </Link>
         </div>
       </section>
